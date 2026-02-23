@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "raymath.h"
+#include "EarthMath.cpp"
 #include <vector>
 #include <cmath>
 
@@ -48,6 +49,8 @@ int main() {
     std::vector<Vector3> trail;
     trail.reserve(TRAIL_LENGTH);
 
+    Vector3 sunPos = { 100.0f, 0.0f, 0.0f };
+
     Mesh  satMesh  = GenMeshSphere(0.25f, 12, 12);
     Model satModel = LoadModelFromMesh(satMesh);
 
@@ -56,10 +59,11 @@ int main() {
         // ── UPDATE LOOP  ──
         UpdateCamera(&camera, CAMERA_FREE);
 
-        earthRotation += 0.1f;
-        Matrix tilt = MatrixRotateX(23.5f * DEG2RAD);
+        float offset = 45.0f;
+        earthRotation = (EarthSim::getCurrentRotationAngle() + offset);
         Matrix spin = MatrixRotateY(earthRotation * DEG2RAD);
-        earthModel.transform = MatrixMultiply(tilt, spin);
+        Matrix tilt = MatrixRotateZ(23.5f * DEG2RAD);
+        earthModel.transform = MatrixMultiply(spin, tilt);
 
         orbitAngle += ORBIT_SPEED;
         if (orbitAngle >= 360.0f) orbitAngle -= 360.0f;
@@ -102,6 +106,10 @@ int main() {
 
                 // Satellite
                 DrawModel(satModel, satPos, 1.0f, RED);
+
+                // Sun
+                DrawSphere(sunPos, 5.0f, YELLOW);
+                DrawLine3D(Vector3Zero(), sunPos, YELLOW);
 
                 DrawGrid(20, 1.0f);
 
