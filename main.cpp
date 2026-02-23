@@ -39,6 +39,22 @@ int main() {
 
     float earthRotation = 0.0f;
 
+    // –– Import Shaders ––
+
+    Shader shader = LoadShader("lighting.vs", "lighting.fs");
+
+    // Get locations for the uniforms
+    int lightPosLoc = GetShaderLocation(shader, "lightPos");
+    int ambientLoc = GetShaderLocation(shader, "ambient");
+
+    // Set ambient light (dark blue/black for space)
+    float lightIntensity = 10.0;
+    Vector3 ambient = Vector3Scale({ 0.1f, 0.1f, 0.12f }, lightIntensity);
+    SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
+
+    // Assign shader to Earth material
+    earthModel.materials[0].shader = shader;
+
     // ── Orbit Parameters ──
     const float ORBIT_RADIUS      = 8.0f;
     const float ORBIT_SPEED       = 0.8f;
@@ -86,6 +102,8 @@ int main() {
             trail.erase(trail.begin());
         trail.push_back(satPos);
 
+        SetShaderValue(shader, lightPosLoc, &sunPos, SHADER_UNIFORM_VEC3);
+
         // ── DRAW ──
         BeginDrawing();
             ClearBackground((Color){ 2, 2, 15, 255 });
@@ -124,6 +142,7 @@ int main() {
     UnloadModel(earthModel);
     UnloadModel(satModel);
     UnloadTexture(earthTexture);
+    UnloadShader(shader);
     CloseWindow();
     return 0;
 }
