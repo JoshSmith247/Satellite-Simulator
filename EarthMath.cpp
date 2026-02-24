@@ -1,6 +1,7 @@
 #include "EarthMath.hpp"
 #include <chrono>
 #include <cmath>
+#include <ctime>
 
 namespace EarthSim {
 

@@ -129,6 +129,54 @@ sat_sim/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/build
 .PHONY : sat_sim/fast
 
+EarthMath.o: EarthMath.cpp.o
+.PHONY : EarthMath.o
+
+# target to build an object file
+EarthMath.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.o
+.PHONY : EarthMath.cpp.o
+
+EarthMath.i: EarthMath.cpp.i
+.PHONY : EarthMath.i
+
+# target to preprocess a source file
+EarthMath.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.i
+.PHONY : EarthMath.cpp.i
+
+EarthMath.s: EarthMath.cpp.s
+.PHONY : EarthMath.s
+
+# target to generate assembly for a file
+EarthMath.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.s
+.PHONY : EarthMath.cpp.s
+
+SunMath.o: SunMath.cpp.o
+.PHONY : SunMath.o
+
+# target to build an object file
+SunMath.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SunMath.cpp.o
+.PHONY : SunMath.cpp.o
+
+SunMath.i: SunMath.cpp.i
+.PHONY : SunMath.i
+
+# target to preprocess a source file
+SunMath.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SunMath.cpp.i
+.PHONY : SunMath.cpp.i
+
+SunMath.s: SunMath.cpp.s
+.PHONY : SunMath.s
+
+# target to generate assembly for a file
+SunMath.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SunMath.cpp.s
+.PHONY : SunMath.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -162,6 +210,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... sat_sim"
+	@echo "... EarthMath.o"
+	@echo "... EarthMath.i"
+	@echo "... EarthMath.s"
+	@echo "... SunMath.o"
+	@echo "... SunMath.i"
+	@echo "... SunMath.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

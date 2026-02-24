@@ -8,7 +8,11 @@ list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/raylib")
 
 find_package(raylib REQUIRED)
 
-add_executable(sat_sim main.cpp)
+add_executable(sat_sim 
+    main.cpp 
+    SunMath.cpp 
+    EarthMath.cpp
+)
 
 # Link the raylib library to your executable
 target_link_libraries(sat_sim raylib)

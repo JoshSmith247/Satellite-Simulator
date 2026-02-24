@@ -1,6 +1,8 @@
 #include "raylib.h"
 #include "raymath.h"
-#include "EarthMath.cpp"
+#include "rlgl.h"
+#include "EarthMath.hpp"
+#include "SunMath.hpp"
 #include <vector>
 #include <cmath>
 
@@ -18,44 +20,44 @@ int main() {
 
     SetTargetFPS(60);
 
-    // ── Texture ──
     Image earthImage = LoadImage("earth_tx.jpg");
     if (earthImage.data == NULL) {
-        TraceLog(LOG_ERROR, "Failed to load earth_tx.jpg — check the file is next to your .exe");
+        TraceLog(LOG_ERROR, "Failed to load earth_tx.jpg");
     }
     Texture2D earthTexture = LoadTextureFromImage(earthImage);
     SetTextureFilter(earthTexture, TEXTURE_FILTER_TRILINEAR);
     SetTextureWrap(earthTexture, TEXTURE_WRAP_CLAMP);
     UnloadImage(earthImage);
 
-    // ── Earth Model (proper UV sphere from Blender) ─-
     Model earthModel = LoadModel("earth_sphere.obj");
     if (earthModel.meshCount == 0) {
-        TraceLog(LOG_ERROR, "Failed to load earth_sphere.obj — check the file is next to your .exe");
+        TraceLog(LOG_ERROR, "Failed to load earth_sphere.obj");
     }
     earthModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
 
     const float EARTH_RADIUS = 5.0f;
+    const float SUN_VISUAL_DISTANCE = 2000.0f;
+    const float SUN_RADIUS = EARTH_RADIUS * 109.0f / 200; // 200 scale down 
 
-    float earthRotation = 0.0f;
+    Texture2D skyTexture = LoadTexture("stars_tx.jpg");
+    SetTextureFilter(skyTexture, TEXTURE_FILTER_BILINEAR);
 
-    // –– Import Shaders ––
+    Mesh skySphere = GenMeshSphere(1.0f, 96, 96);
+    Model skybox = LoadModelFromMesh(skySphere);
+    skybox.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = skyTexture;
+
+    Shader skyShader = LoadShader("skybox.vs", "skybox.fs");
+    skybox.materials[0].shader = skyShader;
 
     Shader shader = LoadShader("lighting.vs", "lighting.fs");
-
-    // Get locations for the uniforms
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int ambientLoc = GetShaderLocation(shader, "ambient");
 
-    // Set ambient light (dark blue/black for space)
-    float lightIntensity = 10.0;
+    float lightIntensity = 5.0;
     Vector3 ambient = Vector3Scale({ 0.1f, 0.1f, 0.12f }, lightIntensity);
     SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
-
-    // Assign shader to Earth material
     earthModel.materials[0].shader = shader;
 
-    // ── Orbit Parameters ──
     const float ORBIT_RADIUS      = 8.0f;
     const float ORBIT_SPEED       = 0.8f;
     const float ORBIT_INCLINATION = 30.0f;
@@ -65,20 +67,20 @@ int main() {
     std::vector<Vector3> trail;
     trail.reserve(TRAIL_LENGTH);
 
-    Vector3 sunPos = { 100.0f, 0.0f, 0.0f };
-
     Mesh  satMesh  = GenMeshSphere(0.25f, 12, 12);
     Model satModel = LoadModelFromMesh(satMesh);
 
     while (!WindowShouldClose()) {
-
-        // ── UPDATE LOOP  ──
         UpdateCamera(&camera, CAMERA_FREE);
 
+        SunSim::SunState sun = SunSim::GetCurrentSunState(SUN_VISUAL_DISTANCE);
+        Vector3 sunPos = sun.position;
+
         float offset = 45.0f;
-        earthRotation = (EarthSim::getCurrentRotationAngle() + offset);
+        float earthRotation = (float)(EarthSim::getCurrentRotationAngle() + offset);
+        
         Matrix spin = MatrixRotateY(earthRotation * DEG2RAD);
-        Matrix tilt = MatrixRotateZ(23.5f * DEG2RAD);
+        Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(spin, tilt);
 
         orbitAngle += ORBIT_SPEED;
@@ -104,16 +106,18 @@ int main() {
 
         SetShaderValue(shader, lightPosLoc, &sunPos, SHADER_UNIFORM_VEC3);
 
-        // ── DRAW ──
         BeginDrawing();
             ClearBackground((Color){ 2, 2, 15, 255 });
 
             BeginMode3D(camera);
+                rlSetClipPlanes(0.1f, 20000.0f);
 
-                // EARTH_RADIUS used as scale since OBJ sphere has radius 1
+                rlDisableDepthMask();
+                DrawModel(skybox, camera.position, -100.0f, WHITE); 
+                rlEnableDepthMask();
+
                 DrawModel(earthModel, Vector3Zero(), EARTH_RADIUS, WHITE);
 
-                // Orbit trail
                 int trailCount = (int)trail.size();
                 for (int i = 1; i < trailCount; i++) {
                     float t = (float)i / (float)TRAIL_LENGTH;
@@ -122,27 +126,35 @@ int main() {
                     DrawLine3D(trail[i - 1], trail[i], trailColor);
                 }
 
-                // Satellite
                 DrawModel(satModel, satPos, 1.0f, RED);
 
-                // Sun
-                DrawSphere(sunPos, 5.0f, YELLOW);
-                DrawLine3D(Vector3Zero(), sunPos, YELLOW);
+                DrawSphere(sunPos, SUN_RADIUS, WHITE);
+                rlDisableDepthMask();
+                for (int i = 1; i <= 8; i++) {
+                    float glowRadius = SUN_RADIUS + (i * 25.0f);
+                    float alpha = 0.15f / (float)i; 
+                    DrawSphere(sunPos, glowRadius, ColorAlpha(YELLOW, alpha));
+                }
+                rlEnableDepthMask();
+
+                Vector3 visualSunLineEnd = Vector3Scale(Vector3Normalize(sunPos), 15.0f);
+                DrawLine3D(Vector3Zero(), visualSunLineEnd, YELLOW);
 
                 DrawGrid(20, 1.0f);
-
             EndMode3D();
 
             DrawText(TextFormat("Orbit angle: %.1f deg", orbitAngle), 10, 10, 20, RAYWHITE);
-            DrawText("WASD + mouse to move camera", 10, 35, 18, GRAY);
-
+            DrawText(TextFormat("Day of Year: %.2f", sun.dayOfYear), 10, 35, 20, YELLOW);
         EndDrawing();
     }
 
     UnloadModel(earthModel);
     UnloadModel(satModel);
+    UnloadModel(skybox);
     UnloadTexture(earthTexture);
+    UnloadTexture(skyTexture);
     UnloadShader(shader);
+    UnloadShader(skyShader);
     CloseWindow();
     return 0;
 }
