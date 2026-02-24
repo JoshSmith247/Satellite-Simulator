@@ -20,7 +20,15 @@ namespace SunSim {
         double lambdaRad = lambda * DEG2RAD;
 
         SunState state;
-        state.dayOfYear = (float)(n + 182.5); // Approximate for UI display
+        
+        // Approx. day of year for UI
+        time_t t = time(NULL);
+        struct tm *now = gmtime(&t);
+        if (now) {
+            state.dayOfYear = (float)now->tm_yday + 1.0f + ((float)now->tm_hour / 24.0f);
+        } else {
+            state.dayOfYear = 0.0f;
+        }
         
         // Position in the Ecliptic Plane (X, Z)
         state.position.x = cosf(lambdaRad) * distance;

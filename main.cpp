@@ -7,8 +7,9 @@
 #include <cmath>
 
 int main() {
-    const int screenWidth = 1200;
-    const int screenHeight = 800;
+    const int screenWidth = 0; //1200;
+    const int screenHeight = 0; //800;
+    SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(screenWidth, screenHeight, "Satellite Orbit Sim");
 
     Camera3D camera = { 0 };
@@ -67,8 +68,14 @@ int main() {
     std::vector<Vector3> trail;
     trail.reserve(TRAIL_LENGTH);
 
-    Mesh  satMesh  = GenMeshSphere(0.25f, 12, 12);
-    Model satModel = LoadModelFromMesh(satMesh);
+    //Mesh  satMesh  = GenMeshSphere(0.25f, 12, 12);
+    //Model satModel = LoadModelFromMesh(satMesh);
+
+    Model satModel = LoadModel("satellite.obj"); 
+
+    satModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = GRAY;
+    // Add Earth lighting shader:
+    satModel.materials[0].shader = shader;
 
     while (!WindowShouldClose()) {
         UpdateCamera(&camera, CAMERA_FREE);
@@ -126,8 +133,9 @@ int main() {
                     DrawLine3D(trail[i - 1], trail[i], trailColor);
                 }
 
-                DrawModel(satModel, satPos, 1.0f, RED);
-
+                float satScale = 0.01f; 
+                DrawModelEx(satModel, satPos, (Vector3){0, 1, 0}, 0.0f, (Vector3){satScale, satScale, satScale}, WHITE);
+                
                 DrawSphere(sunPos, SUN_RADIUS, WHITE);
                 rlDisableDepthMask();
                 for (int i = 1; i <= 8; i++) {
@@ -142,6 +150,10 @@ int main() {
 
                 DrawGrid(20, 1.0f);
             EndMode3D();
+
+            Vector2 screenPos = GetWorldToScreen(satPos, camera);
+            DrawText("SAT-01", (int)screenPos.x - 20, (int)screenPos.y - 40, 20, RAYWHITE);
+            DrawCircle((int)screenPos.x, (int)screenPos.y, 4, RED);
 
             DrawText(TextFormat("Orbit angle: %.1f deg", orbitAngle), 10, 10, 20, RAYWHITE);
             DrawText(TextFormat("Day of Year: %.2f", sun.dayOfYear), 10, 35, 20, YELLOW);
