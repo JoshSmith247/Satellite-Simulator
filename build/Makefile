@@ -177,6 +177,30 @@ SunMath.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SunMath.cpp.s
 .PHONY : SunMath.cpp.s
 
+fetchTLE.o: fetchTLE.cpp.o
+.PHONY : fetchTLE.o
+
+# target to build an object file
+fetchTLE.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.o
+.PHONY : fetchTLE.cpp.o
+
+fetchTLE.i: fetchTLE.cpp.i
+.PHONY : fetchTLE.i
+
+# target to preprocess a source file
+fetchTLE.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.i
+.PHONY : fetchTLE.cpp.i
+
+fetchTLE.s: fetchTLE.cpp.s
+.PHONY : fetchTLE.s
+
+# target to generate assembly for a file
+fetchTLE.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.s
+.PHONY : fetchTLE.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -201,6 +225,390 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+third_party/sgp4/libsgp4/CoordGeodetic.o: third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/CoordGeodetic.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+
+third_party/sgp4/libsgp4/CoordGeodetic.i: third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/CoordGeodetic.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+
+third_party/sgp4/libsgp4/CoordGeodetic.s: third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/CoordGeodetic.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+.PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+
+third_party/sgp4/libsgp4/CoordTopocentric.o: third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/CoordTopocentric.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+
+third_party/sgp4/libsgp4/CoordTopocentric.i: third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/CoordTopocentric.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+
+third_party/sgp4/libsgp4/CoordTopocentric.s: third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/CoordTopocentric.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+.PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+
+third_party/sgp4/libsgp4/DateTime.o: third_party/sgp4/libsgp4/DateTime.cc.o
+.PHONY : third_party/sgp4/libsgp4/DateTime.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/DateTime.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.o
+.PHONY : third_party/sgp4/libsgp4/DateTime.cc.o
+
+third_party/sgp4/libsgp4/DateTime.i: third_party/sgp4/libsgp4/DateTime.cc.i
+.PHONY : third_party/sgp4/libsgp4/DateTime.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/DateTime.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.i
+.PHONY : third_party/sgp4/libsgp4/DateTime.cc.i
+
+third_party/sgp4/libsgp4/DateTime.s: third_party/sgp4/libsgp4/DateTime.cc.s
+.PHONY : third_party/sgp4/libsgp4/DateTime.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/DateTime.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.s
+.PHONY : third_party/sgp4/libsgp4/DateTime.cc.s
+
+third_party/sgp4/libsgp4/DecayedException.o: third_party/sgp4/libsgp4/DecayedException.cc.o
+.PHONY : third_party/sgp4/libsgp4/DecayedException.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/DecayedException.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
+.PHONY : third_party/sgp4/libsgp4/DecayedException.cc.o
+
+third_party/sgp4/libsgp4/DecayedException.i: third_party/sgp4/libsgp4/DecayedException.cc.i
+.PHONY : third_party/sgp4/libsgp4/DecayedException.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/DecayedException.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
+.PHONY : third_party/sgp4/libsgp4/DecayedException.cc.i
+
+third_party/sgp4/libsgp4/DecayedException.s: third_party/sgp4/libsgp4/DecayedException.cc.s
+.PHONY : third_party/sgp4/libsgp4/DecayedException.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/DecayedException.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
+.PHONY : third_party/sgp4/libsgp4/DecayedException.cc.s
+
+third_party/sgp4/libsgp4/Eci.o: third_party/sgp4/libsgp4/Eci.cc.o
+.PHONY : third_party/sgp4/libsgp4/Eci.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Eci.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.o
+.PHONY : third_party/sgp4/libsgp4/Eci.cc.o
+
+third_party/sgp4/libsgp4/Eci.i: third_party/sgp4/libsgp4/Eci.cc.i
+.PHONY : third_party/sgp4/libsgp4/Eci.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Eci.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.i
+.PHONY : third_party/sgp4/libsgp4/Eci.cc.i
+
+third_party/sgp4/libsgp4/Eci.s: third_party/sgp4/libsgp4/Eci.cc.s
+.PHONY : third_party/sgp4/libsgp4/Eci.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Eci.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.s
+.PHONY : third_party/sgp4/libsgp4/Eci.cc.s
+
+third_party/sgp4/libsgp4/Globals.o: third_party/sgp4/libsgp4/Globals.cc.o
+.PHONY : third_party/sgp4/libsgp4/Globals.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Globals.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.o
+.PHONY : third_party/sgp4/libsgp4/Globals.cc.o
+
+third_party/sgp4/libsgp4/Globals.i: third_party/sgp4/libsgp4/Globals.cc.i
+.PHONY : third_party/sgp4/libsgp4/Globals.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Globals.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.i
+.PHONY : third_party/sgp4/libsgp4/Globals.cc.i
+
+third_party/sgp4/libsgp4/Globals.s: third_party/sgp4/libsgp4/Globals.cc.s
+.PHONY : third_party/sgp4/libsgp4/Globals.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Globals.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.s
+.PHONY : third_party/sgp4/libsgp4/Globals.cc.s
+
+third_party/sgp4/libsgp4/Observer.o: third_party/sgp4/libsgp4/Observer.cc.o
+.PHONY : third_party/sgp4/libsgp4/Observer.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Observer.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.o
+.PHONY : third_party/sgp4/libsgp4/Observer.cc.o
+
+third_party/sgp4/libsgp4/Observer.i: third_party/sgp4/libsgp4/Observer.cc.i
+.PHONY : third_party/sgp4/libsgp4/Observer.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Observer.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.i
+.PHONY : third_party/sgp4/libsgp4/Observer.cc.i
+
+third_party/sgp4/libsgp4/Observer.s: third_party/sgp4/libsgp4/Observer.cc.s
+.PHONY : third_party/sgp4/libsgp4/Observer.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Observer.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.s
+.PHONY : third_party/sgp4/libsgp4/Observer.cc.s
+
+third_party/sgp4/libsgp4/OrbitalElements.o: third_party/sgp4/libsgp4/OrbitalElements.cc.o
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/OrbitalElements.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.o
+
+third_party/sgp4/libsgp4/OrbitalElements.i: third_party/sgp4/libsgp4/OrbitalElements.cc.i
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/OrbitalElements.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.i
+
+third_party/sgp4/libsgp4/OrbitalElements.s: third_party/sgp4/libsgp4/OrbitalElements.cc.s
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/OrbitalElements.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
+.PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.s
+
+third_party/sgp4/libsgp4/SGP4.o: third_party/sgp4/libsgp4/SGP4.cc.o
+.PHONY : third_party/sgp4/libsgp4/SGP4.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/SGP4.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.o
+.PHONY : third_party/sgp4/libsgp4/SGP4.cc.o
+
+third_party/sgp4/libsgp4/SGP4.i: third_party/sgp4/libsgp4/SGP4.cc.i
+.PHONY : third_party/sgp4/libsgp4/SGP4.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/SGP4.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.i
+.PHONY : third_party/sgp4/libsgp4/SGP4.cc.i
+
+third_party/sgp4/libsgp4/SGP4.s: third_party/sgp4/libsgp4/SGP4.cc.s
+.PHONY : third_party/sgp4/libsgp4/SGP4.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/SGP4.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.s
+.PHONY : third_party/sgp4/libsgp4/SGP4.cc.s
+
+third_party/sgp4/libsgp4/SatelliteException.o: third_party/sgp4/libsgp4/SatelliteException.cc.o
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/SatelliteException.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.o
+
+third_party/sgp4/libsgp4/SatelliteException.i: third_party/sgp4/libsgp4/SatelliteException.cc.i
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/SatelliteException.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.i
+
+third_party/sgp4/libsgp4/SatelliteException.s: third_party/sgp4/libsgp4/SatelliteException.cc.s
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/SatelliteException.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
+.PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.s
+
+third_party/sgp4/libsgp4/SolarPosition.o: third_party/sgp4/libsgp4/SolarPosition.cc.o
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/SolarPosition.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.o
+
+third_party/sgp4/libsgp4/SolarPosition.i: third_party/sgp4/libsgp4/SolarPosition.cc.i
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/SolarPosition.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.i
+
+third_party/sgp4/libsgp4/SolarPosition.s: third_party/sgp4/libsgp4/SolarPosition.cc.s
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/SolarPosition.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
+.PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.s
+
+third_party/sgp4/libsgp4/TimeSpan.o: third_party/sgp4/libsgp4/TimeSpan.cc.o
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/TimeSpan.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.o
+
+third_party/sgp4/libsgp4/TimeSpan.i: third_party/sgp4/libsgp4/TimeSpan.cc.i
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/TimeSpan.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.i
+
+third_party/sgp4/libsgp4/TimeSpan.s: third_party/sgp4/libsgp4/TimeSpan.cc.s
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/TimeSpan.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
+.PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.s
+
+third_party/sgp4/libsgp4/Tle.o: third_party/sgp4/libsgp4/Tle.cc.o
+.PHONY : third_party/sgp4/libsgp4/Tle.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Tle.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.o
+.PHONY : third_party/sgp4/libsgp4/Tle.cc.o
+
+third_party/sgp4/libsgp4/Tle.i: third_party/sgp4/libsgp4/Tle.cc.i
+.PHONY : third_party/sgp4/libsgp4/Tle.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Tle.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.i
+.PHONY : third_party/sgp4/libsgp4/Tle.cc.i
+
+third_party/sgp4/libsgp4/Tle.s: third_party/sgp4/libsgp4/Tle.cc.s
+.PHONY : third_party/sgp4/libsgp4/Tle.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Tle.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.s
+.PHONY : third_party/sgp4/libsgp4/Tle.cc.s
+
+third_party/sgp4/libsgp4/TleException.o: third_party/sgp4/libsgp4/TleException.cc.o
+.PHONY : third_party/sgp4/libsgp4/TleException.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/TleException.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.o
+.PHONY : third_party/sgp4/libsgp4/TleException.cc.o
+
+third_party/sgp4/libsgp4/TleException.i: third_party/sgp4/libsgp4/TleException.cc.i
+.PHONY : third_party/sgp4/libsgp4/TleException.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/TleException.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.i
+.PHONY : third_party/sgp4/libsgp4/TleException.cc.i
+
+third_party/sgp4/libsgp4/TleException.s: third_party/sgp4/libsgp4/TleException.cc.s
+.PHONY : third_party/sgp4/libsgp4/TleException.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/TleException.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.s
+.PHONY : third_party/sgp4/libsgp4/TleException.cc.s
+
+third_party/sgp4/libsgp4/Util.o: third_party/sgp4/libsgp4/Util.cc.o
+.PHONY : third_party/sgp4/libsgp4/Util.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Util.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.o
+.PHONY : third_party/sgp4/libsgp4/Util.cc.o
+
+third_party/sgp4/libsgp4/Util.i: third_party/sgp4/libsgp4/Util.cc.i
+.PHONY : third_party/sgp4/libsgp4/Util.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Util.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.i
+.PHONY : third_party/sgp4/libsgp4/Util.cc.i
+
+third_party/sgp4/libsgp4/Util.s: third_party/sgp4/libsgp4/Util.cc.s
+.PHONY : third_party/sgp4/libsgp4/Util.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Util.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.s
+.PHONY : third_party/sgp4/libsgp4/Util.cc.s
+
+third_party/sgp4/libsgp4/Vector.o: third_party/sgp4/libsgp4/Vector.cc.o
+.PHONY : third_party/sgp4/libsgp4/Vector.o
+
+# target to build an object file
+third_party/sgp4/libsgp4/Vector.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.o
+.PHONY : third_party/sgp4/libsgp4/Vector.cc.o
+
+third_party/sgp4/libsgp4/Vector.i: third_party/sgp4/libsgp4/Vector.cc.i
+.PHONY : third_party/sgp4/libsgp4/Vector.i
+
+# target to preprocess a source file
+third_party/sgp4/libsgp4/Vector.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.i
+.PHONY : third_party/sgp4/libsgp4/Vector.cc.i
+
+third_party/sgp4/libsgp4/Vector.s: third_party/sgp4/libsgp4/Vector.cc.s
+.PHONY : third_party/sgp4/libsgp4/Vector.s
+
+# target to generate assembly for a file
+third_party/sgp4/libsgp4/Vector.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.s
+.PHONY : third_party/sgp4/libsgp4/Vector.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -216,9 +624,60 @@ help:
 	@echo "... SunMath.o"
 	@echo "... SunMath.i"
 	@echo "... SunMath.s"
+	@echo "... fetchTLE.o"
+	@echo "... fetchTLE.i"
+	@echo "... fetchTLE.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.o"
+	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.i"
+	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.s"
+	@echo "... third_party/sgp4/libsgp4/CoordTopocentric.o"
+	@echo "... third_party/sgp4/libsgp4/CoordTopocentric.i"
+	@echo "... third_party/sgp4/libsgp4/CoordTopocentric.s"
+	@echo "... third_party/sgp4/libsgp4/DateTime.o"
+	@echo "... third_party/sgp4/libsgp4/DateTime.i"
+	@echo "... third_party/sgp4/libsgp4/DateTime.s"
+	@echo "... third_party/sgp4/libsgp4/DecayedException.o"
+	@echo "... third_party/sgp4/libsgp4/DecayedException.i"
+	@echo "... third_party/sgp4/libsgp4/DecayedException.s"
+	@echo "... third_party/sgp4/libsgp4/Eci.o"
+	@echo "... third_party/sgp4/libsgp4/Eci.i"
+	@echo "... third_party/sgp4/libsgp4/Eci.s"
+	@echo "... third_party/sgp4/libsgp4/Globals.o"
+	@echo "... third_party/sgp4/libsgp4/Globals.i"
+	@echo "... third_party/sgp4/libsgp4/Globals.s"
+	@echo "... third_party/sgp4/libsgp4/Observer.o"
+	@echo "... third_party/sgp4/libsgp4/Observer.i"
+	@echo "... third_party/sgp4/libsgp4/Observer.s"
+	@echo "... third_party/sgp4/libsgp4/OrbitalElements.o"
+	@echo "... third_party/sgp4/libsgp4/OrbitalElements.i"
+	@echo "... third_party/sgp4/libsgp4/OrbitalElements.s"
+	@echo "... third_party/sgp4/libsgp4/SGP4.o"
+	@echo "... third_party/sgp4/libsgp4/SGP4.i"
+	@echo "... third_party/sgp4/libsgp4/SGP4.s"
+	@echo "... third_party/sgp4/libsgp4/SatelliteException.o"
+	@echo "... third_party/sgp4/libsgp4/SatelliteException.i"
+	@echo "... third_party/sgp4/libsgp4/SatelliteException.s"
+	@echo "... third_party/sgp4/libsgp4/SolarPosition.o"
+	@echo "... third_party/sgp4/libsgp4/SolarPosition.i"
+	@echo "... third_party/sgp4/libsgp4/SolarPosition.s"
+	@echo "... third_party/sgp4/libsgp4/TimeSpan.o"
+	@echo "... third_party/sgp4/libsgp4/TimeSpan.i"
+	@echo "... third_party/sgp4/libsgp4/TimeSpan.s"
+	@echo "... third_party/sgp4/libsgp4/Tle.o"
+	@echo "... third_party/sgp4/libsgp4/Tle.i"
+	@echo "... third_party/sgp4/libsgp4/Tle.s"
+	@echo "... third_party/sgp4/libsgp4/TleException.o"
+	@echo "... third_party/sgp4/libsgp4/TleException.i"
+	@echo "... third_party/sgp4/libsgp4/TleException.s"
+	@echo "... third_party/sgp4/libsgp4/Util.o"
+	@echo "... third_party/sgp4/libsgp4/Util.i"
+	@echo "... third_party/sgp4/libsgp4/Util.s"
+	@echo "... third_party/sgp4/libsgp4/Vector.o"
+	@echo "... third_party/sgp4/libsgp4/Vector.i"
+	@echo "... third_party/sgp4/libsgp4/Vector.s"
 .PHONY : help
 
 

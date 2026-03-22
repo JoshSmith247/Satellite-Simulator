@@ -7,12 +7,20 @@ set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/raylib")
 
 find_package(raylib REQUIRED)
+find_package(CURL REQUIRED)
+
+file(GLOB SGP4_SOURCES "third_party/sgp4/libsgp4/*.cc")
 
 add_executable(sat_sim 
     main.cpp 
     SunMath.cpp 
     EarthMath.cpp
+    fetchTLE.cpp
+    ${SGP4_SOURCES}
 )
 
-# Link the raylib library to your executable
-target_link_libraries(sat_sim raylib)
+target_link_libraries(sat_sim raylib CURL::libcurl)
+
+target_include_directories(sat_sim PRIVATE
+    third_party/sgp4/libsgp4
+)
