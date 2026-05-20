@@ -1,4 +1,6 @@
 #include "raylib.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 #include "raymath.h"
 #include "rlgl.h"
 #include "EarthMath.hpp"
@@ -13,8 +15,9 @@ int main()
 {
     const int screenWidth = 0;  // 1200;
     const int screenHeight = 0; // 800;
-    SetConfigFlags(FLAG_FULLSCREEN_MODE);
+    // SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(screenWidth, screenHeight, "Satellite Orbit Sim");
+    ToggleFullscreen();
 
     Camera3D camera = {0};
     camera.position = (Vector3){20.0f, 20.0f, 20.0f};
@@ -87,9 +90,55 @@ int main()
     std::string TLE_data = FetchTLE::fetchTLE(target_ID);
     TLEData parsed = FetchTLE::parseTLE(TLE_data);
 
+    Font font = LoadFontEx("Roboto-Med.ttf", 96, 0, 0);
+    Font font_bold = LoadFontEx("Montserrat-Bold.ttf", 96, 0, 0);
+
+    if (font.texture.id == 0 || font_bold.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Failed to load Montserrat.ttf! Using default font.");
+        font = GetFontDefault();
+        font_bold = GetFontDefault();
+    } else {
+        // Load the fonts
+        SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+        SetTextureFilter(font_bold.texture, TEXTURE_FILTER_BILINEAR);
+    }
+
+    int activeDropdown = 0;
+    bool dropDownEditMode = false;
+
     while (!WindowShouldClose())
     {
-        UpdateCamera(&camera, CAMERA_FREE);
+        Vector2 mouseDelta = GetMouseDelta();
+
+        float moveSpeed = 0.15f;
+        Vector3 movement = { 0.0f, 0.0f, 0.0f };
+        if (!dropDownEditMode)
+        {
+            if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))    movement.x =  moveSpeed;
+            if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))  movement.x = -moveSpeed;
+            if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))  movement.y = -moveSpeed;
+            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) movement.y =  moveSpeed;
+        }
+
+        // Right-click drag to rotate; mouse wheel always zooms
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !dropDownEditMode)
+        {
+            HideCursor();
+            float rotationSpeed = 0.3f;
+            UpdateCameraPro(&camera,
+                movement,
+                (Vector3){ mouseDelta.x * rotationSpeed, mouseDelta.y * rotationSpeed, 0.0f },
+                GetMouseWheelMove() * 2.0f
+            );
+        }
+        else
+        {
+            ShowCursor();
+            if (!dropDownEditMode)
+            {
+                UpdateCameraPro(&camera, movement, (Vector3){ 0.0f, 0.0f, 0.0f }, GetMouseWheelMove() * 2.0f);
+            }
+        }
 
         if (IsKeyPressed(KEY_F))
         {
@@ -99,10 +148,9 @@ int main()
         SunSim::SunState sun = SunSim::GetCurrentSunState(SUN_VISUAL_DISTANCE);
         Vector3 sunPos = sun.position;
 
-        float offset = 45.0f;
-        float earthRotation = (float)(EarthSim::getCurrentRotationAngle() + offset);
+        float earthRotation = (float)(EarthSim::getCurrentRotationAngle());
 
-        Matrix spin = MatrixRotateY(earthRotation * DEG2RAD);
+        Matrix spin = MatrixRotateY(-earthRotation * DEG2RAD);
         Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(spin, tilt);
 
@@ -154,9 +202,35 @@ int main()
         DrawGrid(20, 1.0f);
         EndMode3D();
 
-        Vector2 screenPos = GetWorldToScreen(satPos, camera);
-        DrawText("SCALAR", (int)screenPos.x - 20, (int)screenPos.y - 40, 20, RAYWHITE);
-        DrawCircle((int)screenPos.x, (int)screenPos.y, 4, RED);
+        // Only draw the satellite label when it's in front of the camera AND not occluded by Earth.
+        Vector3 camForward = Vector3Subtract(camera.target, camera.position);
+        Vector3 toSat = Vector3Subtract(satPos, camera.position);
+        bool inFront = Vector3DotProduct(toSat, camForward) > 0.0f;
+
+        // Ray-sphere intersection: does the ray from camera to satellite hit the Earth?
+        bool occluded = false;
+        if (inFront)
+        {
+            Vector3 rayDir = Vector3Normalize(toSat);
+            float satDist = Vector3Length(toSat);
+            // oc = ray origin relative to sphere center (Earth is at origin)
+            Vector3 oc = camera.position;
+            float b = Vector3DotProduct(oc, rayDir);
+            float c = Vector3DotProduct(oc, oc) - EARTH_RADIUS * EARTH_RADIUS;
+            float discriminant = b * b - c;
+            if (discriminant >= 0.0f)
+            {
+                float t = -b - sqrtf(discriminant);
+                occluded = (t > 0.0f && t < satDist);
+            }
+        }
+
+        if (inFront && !occluded)
+        {
+            Vector2 screenPos = GetWorldToScreen(satPos, camera);
+            DrawTextEx(font, "SCALAR", Vector2{screenPos.x - 20, screenPos.y - 40}, 20.0f, 2.0f, RAYWHITE);
+            DrawCircle((int)screenPos.x, (int)screenPos.y, 4, RED);
+        }
 
         // Central UI Design
 
@@ -169,20 +243,29 @@ int main()
         DrawRectangleRec(sidebarRect, ColorAlpha(DARKGRAY, 0.7f));
         DrawLineEx((Vector2){sw - sidebarWidth, 0}, (Vector2){sw - sidebarWidth, sh}, 2, GRAY);
 
-        DrawText("SATELLITE TELEMETRY", sw - sidebarWidth + 20, 20, 20, SKYBLUE);
+        DrawTextEx(font_bold, "SATELLITE TELEMETRY", Vector2{sw - sidebarWidth + 20, 20}, 20, 2, SKYBLUE);
         DrawLine(sw - sidebarWidth + 20, 45, sw - 20, 45, RAYWHITE);
 
         int startY = 70;
         int spacing = 30;
 
-        DrawText(TextFormat("ID: %s", parsed.name.c_str()), sw - sidebarWidth + 20, startY, 18, RAYWHITE);
-        DrawText(TextFormat("Status: %s", "ACTIVE"), sw - sidebarWidth + 20, startY + spacing, 18, LIME);
-        DrawText(TextFormat("Altitude: %.2f km", (ORBIT_RADIUS - EARTH_RADIUS) * 1274.2f), sw - sidebarWidth + 20, startY + spacing * 2, 18, RAYWHITE);
-        DrawText(TextFormat("Inclination: %.4f deg", parsed.inclination), sw - sidebarWidth + 20, startY + spacing * 3, 18, RAYWHITE);
-        DrawText(TextFormat("Orbital Vel: %.2f km/s", (parsed.meanMotion * 2 * PI * 6371.0) / 86400.0), sw - sidebarWidth + 20, startY + spacing * 4, 18, RAYWHITE);
+        DrawTextEx(font, TextFormat("ID: %s", parsed.name.c_str()), Vector2{sw - sidebarWidth + 20, (float)startY}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Status: %s", "ACTIVE"), Vector2{sw - sidebarWidth + 20, (float) startY + spacing}, 18, 2, LIME);
+        DrawTextEx(font, TextFormat("Altitude: %.2f km", (ORBIT_RADIUS - EARTH_RADIUS) * 1274.2f), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 2}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Inclination: %.4f deg", parsed.inclination), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 3}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Orbital Vel: %.2f km/s", (parsed.meanMotion * 2 * PI * 6371.0) / 86400.0), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 4}, 18, 2, RAYWHITE);
 
-        DrawText(TextFormat("Orbit angle: %.1f deg", orbitAngle), 10, 10, 20, RAYWHITE);
-        DrawText(TextFormat("Day of Year: %.2f", sun.dayOfYear), 10, 35, 20, YELLOW);
+        DrawTextEx(font, TextFormat("Orbit angle: %.1f deg", orbitAngle), Vector2{10, 10}, 20, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear), Vector2{10, 35}, 20, 2, YELLOW);
+
+        if (GuiDropdownBox((Rectangle){ sw - sidebarWidth + 80, (float)startY + spacing * 6, 100, 30 }, "Option 1;Option 2;Option 3", &activeDropdown, dropDownEditMode)) {
+            dropDownEditMode = !dropDownEditMode;
+
+            if (!dropDownEditMode) {
+                TraceLog(LOG_INFO, "Selected Option Index: %d", activeDropdown);
+            }
+        }
+
         EndDrawing();
     }
 

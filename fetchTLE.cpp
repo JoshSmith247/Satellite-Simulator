@@ -156,20 +156,18 @@ namespace FetchTLE {
         Eci eci = sgp4.FindPosition(now);
         Vector eciPos = eci.Position();
 
-        // Rotate ECI → ECEF using GMST
-        double gmst = now.ToGreenwichSiderealTime();
-        double ecef_x = eciPos.x * cos(gmst) + eciPos.y * sin(gmst);
-        double ecef_y = -eciPos.x * sin(gmst) + eciPos.y * cos(gmst);
-        double ecef_z = eciPos.z;
+        // Keep the satellite in ECI (inertial) space — Earth rotation is handled
+        // by the scene's Earth model transform (EarthSim::getCurrentRotationAngle).
+        // Converting to ECEF here would double-apply the rotation.
 
         // Scale from km to scene units (Earth radius = 6371km → 5.0f in scene)
         const float SCALE = 5.0f / 6371.0f;
 
-        // Remap axes: ECEF X→X, Z→Y (up in Raylib), Y→Z
+        // Remap ECI axes to Raylib: ECI X→X, ECI Z (North Pole)→Y (up), ECI Y→Z
         return Vector3{
-            (float)(ecef_x * SCALE),
-            (float)(ecef_z * SCALE),
-            (float)(ecef_y * SCALE)
+            (float)(eciPos.x * SCALE),
+            (float)(eciPos.z * SCALE),
+            (float)(eciPos.y * SCALE)
         };
     }
 
