@@ -130,7 +130,7 @@ int main()
             UpdateCameraPro(&camera,
                 movement,
                 (Vector3){ mouseDelta.x * rotationSpeed, mouseDelta.y * rotationSpeed, 0.0f },
-                GetMouseWheelMove() * 2.0f
+                0.0f
             );
         }
         else
@@ -154,12 +154,16 @@ int main()
 
         Matrix spin = MatrixRotateY(-earthRotation * DEG2RAD);
         Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
-        earthModel.transform = MatrixMultiply(spin, tilt);
+        earthModel.transform = MatrixMultiply(tilt, spin);
 
         Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
         try {
             auto rawPos = FetchTLE::getScenePosition(sgp4);
-            satPos = {rawPos[0], rawPos[1], rawPos[2]};
+            // Tilt ECI position into the same visual frame as the Earth model
+            satPos = Vector3Transform(
+                {rawPos[0], rawPos[1], rawPos[2]},
+                MatrixRotateZ(23.44f * DEG2RAD)
+            );
         } catch (const std::exception& e) {
             TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
         }
@@ -193,6 +197,7 @@ int main()
 
         float satScale = 0.01f;
         DrawModelEx(satModel, satPos, (Vector3){0, 1, 0}, 0.0f, (Vector3){satScale, satScale, satScale}, WHITE);
+        DrawSphere(satPos, 0.12f, RED);
 
         DrawSphere(sunPos, SUN_RADIUS, WHITE);
         rlDisableDepthMask();
@@ -209,36 +214,6 @@ int main()
 
         DrawGrid(20, 1.0f);
         EndMode3D();
-
-        // Only draw the satellite label when it's in front of the camera AND not occluded by Earth.
-        Vector3 camForward = Vector3Subtract(camera.target, camera.position);
-        Vector3 toSat = Vector3Subtract(satPos, camera.position);
-        bool inFront = Vector3DotProduct(toSat, camForward) > 0.0f;
-
-        // Ray-sphere intersection: does the ray from camera to satellite hit the Earth?
-        bool occluded = false;
-        if (inFront)
-        {
-            Vector3 rayDir = Vector3Normalize(toSat);
-            float satDist = Vector3Length(toSat);
-            // oc = ray origin relative to sphere center (Earth is at origin)
-            Vector3 oc = camera.position;
-            float b = Vector3DotProduct(oc, rayDir);
-            float c = Vector3DotProduct(oc, oc) - EARTH_RADIUS * EARTH_RADIUS;
-            float discriminant = b * b - c;
-            if (discriminant >= 0.0f)
-            {
-                float t = -b - sqrtf(discriminant);
-                occluded = (t > 0.0f && t < satDist);
-            }
-        }
-
-        if (inFront && !occluded)
-        {
-            Vector2 screenPos = GetWorldToScreen(satPos, camera);
-            DrawTextEx(font, "SCALAR", Vector2{screenPos.x - 20, screenPos.y - 40}, 20.0f, 2.0f, RAYWHITE);
-            DrawCircle((int)screenPos.x, (int)screenPos.y, 4, RED);
-        }
 
         // Central UI Design
 
