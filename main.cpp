@@ -8,11 +8,21 @@
 #include "fetchTLE.hpp"
 #include "SGP4.h"
 #include "Tle.h"
+#include <exception>
 #include <vector>
 #include <cmath>
 
 int main()
 {
+    std::string target_ID = "25544";
+    std::string TLE_data = FetchTLE::fetchTLE(target_ID);
+    if (!FetchTLE::validateTLE(TLE_data)) {
+        TraceLog(LOG_ERROR, "Failed to fetch valid TLE for NORAD ID: %s", target_ID.c_str());
+        return 1;
+    }
+    libsgp4::Tle tle = FetchTLE::buildTle(TLE_data);
+    libsgp4::SGP4 sgp4(tle);
+
     const int screenWidth = 0;  // 1200;
     const int screenHeight = 0; // 800;
     // SetConfigFlags(FLAG_FULLSCREEN_MODE);
@@ -82,11 +92,6 @@ int main()
     // Add Earth lighting shader:
     satModel.materials[0].shader = shader;
 
-    std::string target_ID = "25544";
-    std::string TLE_data = FetchTLE::fetchTLE(target_ID);
-    libsgp4::Tle tle = FetchTLE::buildTle(TLE_data);
-    libsgp4::SGP4 sgp4(tle);
-
     Font font = LoadFontEx("Roboto-Med.ttf", 96, 0, 0);
     Font font_bold = LoadFontEx("Montserrat-Bold.ttf", 96, 0, 0);
 
@@ -151,8 +156,13 @@ int main()
         Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(spin, tilt);
 
-        auto rawPos = FetchTLE::getScenePosition(sgp4);
-        Vector3 satPos = {rawPos[0], rawPos[1], rawPos[2]};
+        Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
+        try {
+            auto rawPos = FetchTLE::getScenePosition(sgp4);
+            satPos = {rawPos[0], rawPos[1], rawPos[2]};
+        } catch (const std::exception& e) {
+            TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
+        }
 
         if ((int)trail.size() >= TRAIL_LENGTH)
             trail.erase(trail.begin());
