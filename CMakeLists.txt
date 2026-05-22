@@ -23,4 +23,11 @@ target_link_libraries(sat_sim raylib CURL::libcurl)
 
 target_include_directories(sat_sim PRIVATE
     third_party/sgp4/libsgp4
+    third_party/raygui
+)
+
+add_custom_command(TARGET sat_sim POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        ${CMAKE_BINARY_DIR}
 )

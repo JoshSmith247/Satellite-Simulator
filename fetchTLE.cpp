@@ -1,15 +1,14 @@
 #include "fetchTLE.hpp"
+#include <array>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <cmath>
 #include <curl/curl.h>
 #include "Tle.h"
 #include "SGP4.h"
 #include "Eci.h"
 #include "DateTime.h"
 #include "Vector.h"
-#include "raylib.h"
 
 using namespace libsgp4;
 
@@ -19,7 +18,7 @@ namespace FetchTLE {
      * @brief Callback function to handle data received from CelesTrak.
      * libcurl calls this function as it receives chunks of data.
      */
-    size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
         size_t totalSize = size * nmemb;
         userp->append((char*)contents, totalSize);
         return totalSize;
@@ -104,71 +103,29 @@ namespace FetchTLE {
         return readBuffer;
     }
 
-    TLEData parseTLE(const std::string& raw) {
+    Tle buildTle(const std::string& raw) {
         std::istringstream stream(raw);
         std::string line0, line1, line2;
-
         std::getline(stream, line0);
         std::getline(stream, line1);
         std::getline(stream, line2);
-
-        // Strip carriage returns
         auto strip = [](std::string& s) {
             if (!s.empty() && s.back() == '\r') s.pop_back();
         };
         strip(line0); strip(line1); strip(line2);
-
-        TLEData tle;
-        tle.name         = line0;
-        tle.epoch        = std::stod(line1.substr(18, 14));
-        tle.inclination  = std::stod(line2.substr(8,  8));
-        tle.raan         = std::stod(line2.substr(17, 8));
-        tle.eccentricity = std::stod("0." + line2.substr(26, 7)); // implied decimal
-        tle.argPerigee   = std::stod(line2.substr(34, 8));
-        tle.meanAnomaly  = std::stod(line2.substr(43, 8));
-        tle.meanMotion   = std::stod(line2.substr(52, 11));
-
-        return tle;
+        return Tle(line0, line1, line2);
     }
 
-    Vector3 getScenePosition(const std::string& rawTLE) {
-        // Split the raw string into the three TLE lines
-        std::istringstream stream(rawTLE);
-        std::string line0, line1, line2;
-        std::getline(stream, line0);
-        std::getline(stream, line1);
-        std::getline(stream, line2);
-
-        // Strip carriage returns
-        auto strip = [](std::string& s) {
-            if (!s.empty() && s.back() == '\r') s.pop_back();
-        };
-        strip(line0); strip(line1); strip(line2);
-
-        // Build the SGP4 Tle object and propagator
-        Tle tle(line0, line1, line2);
-        SGP4 sgp4(tle);
-
-        // Get current UTC time
+    std::array<float, 3> getScenePosition(const libsgp4::SGP4& sgp4) {
         DateTime now = DateTime::Now(true);
-
-        // Propagate — returns ECI position in km
         Eci eci = sgp4.FindPosition(now);
         Vector eciPos = eci.Position();
-
-        // Keep the satellite in ECI (inertial) space — Earth rotation is handled
-        // by the scene's Earth model transform (EarthSim::getCurrentRotationAngle).
-        // Converting to ECEF here would double-apply the rotation.
 
         // Scale from km to scene units (Earth radius = 6371km → 5.0f in scene)
         const float SCALE = 5.0f / 6371.0f;
 
         // Remap ECI axes to Raylib: ECI X→X, ECI Z (North Pole)→Y (up), ECI Y→Z
-        return Vector3{
-            (float)(eciPos.x * SCALE),
-            (float)(eciPos.z * SCALE),
-            (float)(eciPos.y * SCALE)
-        };
+        return { (float)(eciPos.x * SCALE), (float)(eciPos.z * SCALE), (float)(eciPos.y * SCALE) };
     }
 
 } // namespace FetchTLE

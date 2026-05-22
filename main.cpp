@@ -68,12 +68,8 @@ int main()
     SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
     earthModel.materials[0].shader = shader;
 
-    const float ORBIT_RADIUS = 8.0f;
-    const float ORBIT_SPEED = 0.8f;
-    const float ORBIT_INCLINATION = 30.0f;
     const int TRAIL_LENGTH = 200;
 
-    float orbitAngle = 0.0f;
     std::vector<Vector3> trail;
     trail.reserve(TRAIL_LENGTH);
 
@@ -88,7 +84,8 @@ int main()
 
     std::string target_ID = "25544";
     std::string TLE_data = FetchTLE::fetchTLE(target_ID);
-    TLEData parsed = FetchTLE::parseTLE(TLE_data);
+    libsgp4::Tle tle = FetchTLE::buildTle(TLE_data);
+    libsgp4::SGP4 sgp4(tle);
 
     Font font = LoadFontEx("Roboto-Med.ttf", 96, 0, 0);
     Font font_bold = LoadFontEx("Montserrat-Bold.ttf", 96, 0, 0);
@@ -154,7 +151,8 @@ int main()
         Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(spin, tilt);
 
-        Vector3 satPos = FetchTLE::getScenePosition(TLE_data);
+        auto rawPos = FetchTLE::getScenePosition(sgp4);
+        Vector3 satPos = {rawPos[0], rawPos[1], rawPos[2]};
 
         if ((int)trail.size() >= TRAIL_LENGTH)
             trail.erase(trail.begin());
@@ -249,14 +247,14 @@ int main()
         int startY = 70;
         int spacing = 30;
 
-        DrawTextEx(font, TextFormat("ID: %s", parsed.name.c_str()), Vector2{sw - sidebarWidth + 20, (float)startY}, 18, 2, RAYWHITE);
+        float altitudeKm = (Vector3Length(satPos) - EARTH_RADIUS) * (6371.0f / 5.0f);
+        DrawTextEx(font, TextFormat("ID: %s", tle.Name().c_str()), Vector2{sw - sidebarWidth + 20, (float)startY}, 18, 2, RAYWHITE);
         DrawTextEx(font, TextFormat("Status: %s", "ACTIVE"), Vector2{sw - sidebarWidth + 20, (float) startY + spacing}, 18, 2, LIME);
-        DrawTextEx(font, TextFormat("Altitude: %.2f km", (ORBIT_RADIUS - EARTH_RADIUS) * 1274.2f), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 2}, 18, 2, RAYWHITE);
-        DrawTextEx(font, TextFormat("Inclination: %.4f deg", parsed.inclination), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 3}, 18, 2, RAYWHITE);
-        DrawTextEx(font, TextFormat("Orbital Vel: %.2f km/s", (parsed.meanMotion * 2 * PI * 6371.0) / 86400.0), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 4}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Altitude: %.2f km", altitudeKm), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 2}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Inclination: %.4f deg", tle.Inclination(true)), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 3}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Orbital Vel: %.2f km/s", (tle.MeanMotion() * 2 * PI * 6371.0) / 86400.0), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 4}, 18, 2, RAYWHITE);
 
-        DrawTextEx(font, TextFormat("Orbit angle: %.1f deg", orbitAngle), Vector2{10, 10}, 20, 2, RAYWHITE);
-        DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear), Vector2{10, 35}, 20, 2, YELLOW);
+        DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear), Vector2{10, 10}, 20, 2, YELLOW);
 
         if (GuiDropdownBox((Rectangle){ sw - sidebarWidth + 80, (float)startY + spacing * 6, 100, 30 }, "Option 1;Option 2;Option 3", &activeDropdown, dropDownEditMode)) {
             dropDownEditMode = !dropDownEditMode;
