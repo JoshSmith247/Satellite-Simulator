@@ -1,5 +1,6 @@
 #include "fetchTLE.hpp"
 #include <array>
+#include <vector>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -121,11 +122,40 @@ namespace FetchTLE {
         Eci eci = sgp4.FindPosition(now);
         Vector eciPos = eci.Position();
 
-        // Scale from km to scene units (Earth radius = 6371km → 5.0f in scene)
         const float SCALE = 5.0f / 6371.0f;
 
-        // Remap ECI axes to Raylib: ECI X→X, ECI Z (North Pole)→Y (up), ECI Y→Z
-        return { (float)(eciPos.x * SCALE), (float)(eciPos.z * SCALE), (float)(eciPos.y * SCALE) };
+        // ECI → Raylib mapping (accounts for OBJ sphere UV chirality):
+        //   ECI Z (North Pole)  → Raylib Y (up)
+        //   −ECI Y              → Raylib X  (east = CW in OBJ model space, so X is negated)
+        //   −ECI X (vernal eq.) → Raylib Z
+        // Earth spin uses MatrixRotateY(+ERA + 112.5°) — positive ERA, 112.5° phase offset.
+        return { (float)(-eciPos.y * SCALE), (float)(eciPos.z * SCALE), (float)(-eciPos.x * SCALE) };
+    }
+
+    std::vector<std::array<float, 3>> getFuturePositions(const libsgp4::SGP4& sgp4, int numPoints, double intervalMinutes) {
+        std::vector<std::array<float, 3>> positions;
+        positions.reserve(numPoints);
+
+        const float SCALE = 5.0f / 6371.0f;
+        DateTime now = DateTime::Now(true);
+
+        for (int i = 0; i < numPoints; i++) {
+            try {
+                DateTime future = now.AddMinutes(i * intervalMinutes);
+                Eci eci = sgp4.FindPosition(future);
+                Vector eciPos = eci.Position();
+                positions.push_back({
+                    (float)(-eciPos.y * SCALE),
+                    (float)(eciPos.z * SCALE),
+                    (float)(-eciPos.x * SCALE)
+                });
+            } catch (...) {
+                // Stop on propagation failure (satellite decayed or out of range)
+                break;
+            }
+        }
+
+        return positions;
     }
 
 } // namespace FetchTLE

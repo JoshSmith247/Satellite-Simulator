@@ -30,10 +30,12 @@ namespace SunSim {
             state.dayOfYear = 0.0f;
         }
         
-        // Position in the Ecliptic Plane (X, Z)
+        // Sun position in Raylib world (ECI-mapped: ECI X→X, ECI Y→Z, ECI Z→Y).
+        // Ecliptic (cosλ, sinλ, 0) → ECI (cosλ, sinλ·cosε, sinλ·sinε) → Raylib below.
+        const float eps = 23.44f * DEG2RAD;
         state.position.x = cosf(lambdaRad) * distance;
-        state.position.z = sinf(lambdaRad) * distance;
-        state.position.y = 0.0f; 
+        state.position.z = sinf(lambdaRad) * cosf(eps) * distance;
+        state.position.y = sinf(lambdaRad) * sinf(eps) * distance;
 
         return state;
     }

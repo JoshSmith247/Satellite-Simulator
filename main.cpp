@@ -83,6 +83,14 @@ int main()
     std::vector<Vector3> trail;
     trail.reserve(TRAIL_LENGTH);
 
+    const int   FUTURE_POINTS   = 360;   // 12 hours at 2-min intervals
+    const float FUTURE_INTERVAL = 2.0f;  // minutes between samples
+    const float FUTURE_UPDATE_S = 60.0f; // recompute every 60 seconds
+
+    std::vector<Vector3> futurePath;
+    futurePath.reserve(FUTURE_POINTS);
+    float futureTimer = FUTURE_UPDATE_S; // trigger immediate first build
+
     // Mesh  satMesh  = GenMeshSphere(0.25f, 12, 12);
     // Model satModel = LoadModelFromMesh(satMesh);
 
@@ -152,14 +160,13 @@ int main()
 
         float earthRotation = (float)(EarthSim::getCurrentRotationAngle());
 
-        Matrix spin = MatrixRotateY(-earthRotation * DEG2RAD);
+        Matrix spin = MatrixRotateY((earthRotation + 112.5f) * DEG2RAD);
         Matrix tilt = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(tilt, spin);
 
         Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
         try {
             auto rawPos = FetchTLE::getScenePosition(sgp4);
-            // Tilt ECI position into the same visual frame as the Earth model
             satPos = Vector3Transform(
                 {rawPos[0], rawPos[1], rawPos[2]},
                 MatrixRotateZ(23.44f * DEG2RAD)
@@ -171,6 +178,18 @@ int main()
         if ((int)trail.size() >= TRAIL_LENGTH)
             trail.erase(trail.begin());
         trail.push_back(satPos);
+
+        // Rebuild future path every FUTURE_UPDATE_S seconds
+        futureTimer += GetFrameTime();
+        if (futureTimer >= FUTURE_UPDATE_S) {
+            futureTimer = 0.0f;
+            futurePath.clear();
+            Matrix futureTilt = MatrixRotateZ(23.44f * DEG2RAD);
+            auto rawFuture = FetchTLE::getFuturePositions(sgp4, FUTURE_POINTS, FUTURE_INTERVAL);
+            for (auto& p : rawFuture) {
+                futurePath.push_back(Vector3Transform({p[0], p[1], p[2]}, futureTilt));
+            }
+        }
 
         SetShaderValue(shader, lightPosLoc, &sunPos, SHADER_UNIFORM_VEC3);
 
@@ -195,6 +214,16 @@ int main()
             DrawLine3D(trail[i - 1], trail[i], trailColor);
         }
 
+        // 12-hour extrapolated path: amber fading to transparent
+        int futureCount = (int)futurePath.size();
+        for (int i = 1; i < futureCount; i++)
+        {
+            float t = (float)i / (float)FUTURE_POINTS;
+            unsigned char alpha = (unsigned char)((1.0f - t) * 200);
+            Color futureColor = {255, 160, 40, alpha};
+            DrawLine3D(futurePath[i - 1], futurePath[i], futureColor);
+        }
+
         float satScale = 0.01f;
         DrawModelEx(satModel, satPos, (Vector3){0, 1, 0}, 0.0f, (Vector3){satScale, satScale, satScale}, WHITE);
         DrawSphere(satPos, 0.12f, RED);
@@ -217,8 +246,9 @@ int main()
 
         // Central UI Design
 
-        float sw = (float)GetScreenWidth();
-        float sh = (float)GetScreenHeight();
+        int monitor = GetCurrentMonitor();
+        float sw = IsWindowFullscreen() ? (float)GetMonitorWidth(monitor) : (float)GetScreenWidth();
+        float sh = IsWindowFullscreen() ? (float)GetMonitorHeight(monitor) : (float)GetScreenHeight();
 
         float sidebarWidth = 300.0f;
         Rectangle sidebarRect = {sw - sidebarWidth, 0, sidebarWidth, sh};
@@ -237,7 +267,7 @@ int main()
         DrawTextEx(font, TextFormat("Status: %s", "ACTIVE"), Vector2{sw - sidebarWidth + 20, (float) startY + spacing}, 18, 2, LIME);
         DrawTextEx(font, TextFormat("Altitude: %.2f km", altitudeKm), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 2}, 18, 2, RAYWHITE);
         DrawTextEx(font, TextFormat("Inclination: %.4f deg", tle.Inclination(true)), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 3}, 18, 2, RAYWHITE);
-        DrawTextEx(font, TextFormat("Orbital Vel: %.2f km/s", (tle.MeanMotion() * 2 * PI * 6371.0) / 86400.0), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 4}, 18, 2, RAYWHITE);
+        DrawTextEx(font, TextFormat("Orbital Vel: %.2f km/s", (tle.MeanMotion() * 2 * PI * (6371.0f + altitudeKm)) / 86400.0), Vector2{sw - sidebarWidth + 20, (float) startY + spacing * 4}, 18, 2, RAYWHITE);
 
         DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear), Vector2{10, 10}, 20, 2, YELLOW);
 

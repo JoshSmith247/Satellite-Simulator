@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string>
+#include <vector>
 #include "SGP4.h"
 
 namespace FetchTLE {
@@ -11,6 +12,7 @@ namespace FetchTLE {
     std::string fetchTLE(const std::string& noradID);
     libsgp4::Tle buildTle(const std::string& raw);
     std::array<float, 3> getScenePosition(const libsgp4::SGP4& sgp4);
+    std::vector<std::array<float, 3>> getFuturePositions(const libsgp4::SGP4& sgp4, int numPoints, double intervalMinutes);
 
 }
 
