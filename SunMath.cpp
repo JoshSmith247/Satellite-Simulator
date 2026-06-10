@@ -30,12 +30,12 @@ namespace SunSim {
             state.dayOfYear = 0.0f;
         }
         
-        // Sun position in Raylib world (ECI-mapped: ECI X→X, ECI Y→Z, ECI Z→Y).
-        // Ecliptic (cosλ, sinλ, 0) → ECI (cosλ, sinλ·cosε, sinλ·sinε) → Raylib below.
-        const float eps = 23.44f * DEG2RAD;
-        state.position.x = cosf(lambdaRad) * distance;
-        state.position.z = sinf(lambdaRad) * cosf(eps) * distance;
-        state.position.y = sinf(lambdaRad) * sinf(eps) * distance;
+        // Ecliptic → ECI → canonical Raylib (X=-ECI_Y, Y=ECI_Z, Z=-ECI_X)
+        // → world space (+RotateZ 23.44°, same as satellites in main.cpp).
+        // The obliquity cancels: sun always lands at world Y=0 (ecliptic = world XZ plane).
+        state.position.x = -sinf(lambdaRad) * distance;
+        state.position.y = 0.0f;
+        state.position.z = -cosf(lambdaRad) * distance;
 
         return state;
     }

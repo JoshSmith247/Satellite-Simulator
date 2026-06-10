@@ -8,6 +8,9 @@
 #include "fetchTLE.hpp"
 #include "SGP4.h"
 #include "Tle.h"
+#include "Eci.h"
+#include "CoordGeodetic.h"
+#include "DateTime.h"
 #include <exception>
 #include <vector>
 #include <cmath>
@@ -22,6 +25,18 @@ int main()
     }
     libsgp4::Tle tle = FetchTLE::buildTle(TLE_data);
     libsgp4::SGP4 sgp4(tle);
+
+    // TEMP DIAG: print propagated geodetic sub-point for cross-check
+    {
+        libsgp4::DateTime now = libsgp4::DateTime::Now(true);
+        libsgp4::Eci eci = sgp4.FindPosition(now);
+        libsgp4::CoordGeodetic geo = eci.ToGeodetic();
+        libsgp4::Vector p = eci.Position();
+        TraceLog(LOG_WARNING, "DIAG UTC %s", now.ToString().c_str());
+        TraceLog(LOG_WARNING, "DIAG ECI_km %.3f %.3f %.3f", p.x, p.y, p.z);
+        TraceLog(LOG_WARNING, "DIAG GEO lat=%.4f lon=%.4f alt_km=%.3f",
+                 geo.latitude * RAD2DEG, geo.longitude * RAD2DEG, geo.altitude);
+    }
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(0, 0, "Satellite Orbit Sim");
@@ -80,7 +95,7 @@ int main()
 
     // Reduced ambient for dramatic day/night contrast
     float lightIntensity = 1.2f;
-    Vector3 ambient      = Vector3Scale({0.08f, 0.08f, 0.10f}, lightIntensity);
+    Vector3 ambient      = Vector3Scale({1.0f, 1.0f, 1.0f}, lightIntensity); // TEMP DIAG
     SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
     earthModel.materials[0].shader = shader;
 
@@ -195,16 +210,29 @@ int main()
         Matrix tilt  = MatrixRotateZ(23.44f * DEG2RAD);
         earthModel.transform = MatrixMultiply(tilt, spin);
 
-        Vector3 stationPositions[2];
-        for (int i = 0; i < STATION_COUNT; i++) {
-            float latR    = groundStations[i].lat * DEG2RAD;
-            float lonEciR = (earthRotation + groundStations[i].lon) * DEG2RAD;
-            stationPositions[i] = Vector3Transform(
-                {-cosf(latR) * sinf(lonEciR) * EARTH_RADIUS,
-                  sinf(latR) * EARTH_RADIUS,
-                 -cosf(latR) * cosf(lonEciR) * EARTH_RADIUS},
-                MatrixRotateZ(23.44f * DEG2RAD));
-        }
+        // Convert geographic (lat_deg, lon_deg, altitude) to world-space position.
+        // altitude is in scene units above EARTH_RADIUS (0 = surface).
+        // LON_CALIB: model-space azimuth offset for longitude 0. Empirically calibrated
+        // against the rendered continents (verified to ~1°); the OBJ-UV-implied 22.5° lands
+        // ~22.5° too far east. Nudge this one number if the markers need a final tweak
+        // (larger = markers move west).
+        const float LON_CALIB = 45.0f;
+        auto geoToWorld = [&](float lat_deg, float lon_deg, float altitude) -> Vector3 {
+            float latR  = lat_deg * DEG2RAD;
+            float alpha = (LON_CALIB - lon_deg) * DEG2RAD;
+            float r     = EARTH_RADIUS + altitude;
+            Vector3 modelPos = {
+                r * cosf(latR) * cosf(alpha),
+                r * sinf(latR),
+                r * cosf(latR) * sinf(alpha)
+            };
+            // Use the exact same transform as the textured globe so markers pin to the texture.
+            return Vector3Transform(modelPos, earthModel.transform);
+        };
+
+        Vector3 stationPositions[STATION_COUNT];
+        for (int i = 0; i < STATION_COUNT; i++)
+            stationPositions[i] = geoToWorld(groundStations[i].lat, groundStations[i].lon, 0.0f);
 
         Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
         try {
@@ -218,6 +246,11 @@ int main()
 
         if ((int)trail.size() >= TRAIL_LENGTH) trail.erase(trail.begin());
         trail.push_back(satPos);
+
+        // TEMP DIAG: park camera over the ISS dot to read the texture beneath it
+        static int _diagFrame = 0; _diagFrame++;
+        camera.position = Vector3Scale(Vector3Normalize(satPos), 13.0f);
+        camera.target = Vector3Zero(); camera.up = (Vector3){0,1,0};
 
         futureTimer += GetFrameTime();
         if (futureTimer >= FUTURE_UPDATE_S) {
@@ -332,12 +365,12 @@ int main()
             (Vector3){satScale, satScale, satScale}, WHITE);
         DrawSphere(satPos, 0.07f, {255, 235, 160, 255});
 
-        // Ground stations
+        // Ground stations — per-station color matches the fixed 2D legend
+        Color stationColors[STATION_COUNT] = {YELLOW, {80, 220, 255, 255}};
         for (int i = 0; i < STATION_COUNT; i++) {
-            DrawSphere(stationPositions[i], 0.13f, YELLOW);
-            Vector3 spikeEnd = Vector3Add(stationPositions[i],
-                Vector3Scale(Vector3Normalize(stationPositions[i]), 0.35f));
-            DrawLine3D(stationPositions[i], spikeEnd, YELLOW);
+            Vector3 tip = geoToWorld(groundStations[i].lat, groundStations[i].lon, 0.5f);
+            DrawLine3D(stationPositions[i], tip, stationColors[i]);
+            DrawSphere(tip, 0.12f, stationColors[i]);
         }
 
         // Sun — bright core + minimal close-range rings (bloom handles the corona)
@@ -396,19 +429,38 @@ int main()
         EndBlendMode();
 
         // ── 2D UI overlay ─────────────────────────────────────────────────────
-        float screenW = (float)GetScreenWidth();
-        float screenH = (float)GetScreenHeight();
+        float screenW      = (float)GetScreenWidth();
+        float screenH      = (float)GetScreenHeight();
+        float sidebarWidth = 300.0f;
 
+        // Floating station labels — follow the 3D marker so geography is unambiguous
         for (int i = 0; i < STATION_COUNT; i++) {
             if (Vector3DotProduct(Vector3Normalize(stationPositions[i]),
                                   Vector3Normalize(camera.position)) > 0.0f) {
-                Vector2 screenPos = GetWorldToScreen(stationPositions[i], camera);
+                Vector2 sp = GetWorldToScreen(stationPositions[i], camera);
                 DrawTextEx(font, groundStations[i].name,
-                           {screenPos.x + 8, screenPos.y - 6}, 16, 1, YELLOW);
+                           {sp.x + 8.0f, sp.y - 8.0f}, 18, 1, stationColors[i]);
             }
         }
 
-        float sidebarWidth = 300.0f;
+        // Fixed ground station legend — constant screen position, never moves
+        {
+            const float panelX = 10.0f;
+            const float rowH   = 26.0f;
+            float panelY  = screenH - (STATION_COUNT * rowH) - 34.0f;
+            float panelW  = 160.0f;
+            float panelHt = STATION_COUNT * rowH + 28.0f;
+            DrawRectangleRec((Rectangle){panelX - 4.0f, panelY - 22.0f, panelW, panelHt},
+                              ColorAlpha(BLACK, 0.5f));
+            DrawTextEx(font, "GND STATIONS", (Vector2){panelX, panelY - 20.0f}, 14, 1, LIGHTGRAY);
+            for (int i = 0; i < STATION_COUNT; i++) {
+                float y = panelY + i * rowH;
+                DrawRectangleV((Vector2){panelX, y + 4.0f}, (Vector2){12.0f, 12.0f},
+                               stationColors[i]);
+                DrawTextEx(font, groundStations[i].name, (Vector2){panelX + 18.0f, y}, 16, 1,
+                           stationColors[i]);
+            }
+        }
         Rectangle sidebarRect = {screenW - sidebarWidth, 0, sidebarWidth, screenH};
         DrawRectangleRec(sidebarRect, ColorAlpha(DARKGRAY, 0.7f));
         DrawLineEx({screenW - sidebarWidth, 0}, {screenW - sidebarWidth, screenH}, 2, GRAY);
@@ -444,7 +496,9 @@ int main()
                 TraceLog(LOG_INFO, "Selected Option Index: %d", activeDropdown);
         }
 
+        if (_diagFrame == 90) TakeScreenshot("satdiag.png");
         EndDrawing();
+        if (_diagFrame >= 91) break;
     }
 
     UnloadRenderTexture(sceneTarget);
