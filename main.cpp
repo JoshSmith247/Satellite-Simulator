@@ -6,11 +6,13 @@
 #include "EarthMath.hpp"
 #include "SunMath.hpp"
 #include "fetchTLE.hpp"
+#include "OrbitalMechanics.hpp"
 #include "SGP4.h"
 #include "Tle.h"
 #include "Eci.h"
 #include "CoordGeodetic.h"
 #include "DateTime.h"
+#include "Vector.h"
 #include <exception>
 #include <vector>
 #include <cmath>
@@ -25,18 +27,6 @@ int main()
     }
     libsgp4::Tle tle = FetchTLE::buildTle(TLE_data);
     libsgp4::SGP4 sgp4(tle);
-
-    // TEMP DIAG: print propagated geodetic sub-point for cross-check
-    {
-        libsgp4::DateTime now = libsgp4::DateTime::Now(true);
-        libsgp4::Eci eci = sgp4.FindPosition(now);
-        libsgp4::CoordGeodetic geo = eci.ToGeodetic();
-        libsgp4::Vector p = eci.Position();
-        TraceLog(LOG_WARNING, "DIAG UTC %s", now.ToString().c_str());
-        TraceLog(LOG_WARNING, "DIAG ECI_km %.3f %.3f %.3f", p.x, p.y, p.z);
-        TraceLog(LOG_WARNING, "DIAG GEO lat=%.4f lon=%.4f alt_km=%.3f",
-                 geo.latitude * RAD2DEG, geo.longitude * RAD2DEG, geo.altitude);
-    }
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(0, 0, "Satellite Orbit Sim");
@@ -95,7 +85,7 @@ int main()
 
     // Reduced ambient for dramatic day/night contrast
     float lightIntensity = 1.2f;
-    Vector3 ambient      = Vector3Scale({1.0f, 1.0f, 1.0f}, lightIntensity); // TEMP DIAG
+    Vector3 ambient      = Vector3Scale({0.08f, 0.08f, 0.10f}, lightIntensity);
     SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
     earthModel.materials[0].shader = shader;
 
@@ -143,6 +133,11 @@ int main()
     std::vector<Vector3> futurePath;
     futurePath.reserve(FUTURE_POINTS);
     float futureTimer = FUTURE_UPDATE_S;
+
+    // Two-body Kepler prediction, plotted alongside the perturbed SGP4 track.
+    std::vector<Vector3> keplerPath;
+    keplerPath.reserve(FUTURE_POINTS);
+    OrbitalMechanics::Elements kepEl;  // refreshed with the future track
 
     // ── Satellite model ──────────────────────────────────────────────────────
     Model satModel = LoadModel("satellite.obj");
@@ -217,18 +212,22 @@ int main()
         // ~22.5° too far east. Nudge this one number if the markers need a final tweak
         // (larger = markers move west).
         const float LON_CALIB = 45.0f;
-        auto geoToWorld = [&](float lat_deg, float lon_deg, float altitude) -> Vector3 {
+        // Model-space (untransformed) position of a geographic point. altitude in scene units
+        // above EARTH_RADIUS (0 = surface). Apply earthModel.transform to get world space.
+        auto geoToModel = [&](float lat_deg, float lon_deg, float altitude) -> Vector3 {
             float latR  = lat_deg * DEG2RAD;
             float alpha = (LON_CALIB - lon_deg) * DEG2RAD;
             float r     = EARTH_RADIUS + altitude;
-            Vector3 modelPos = {
-                r * cosf(latR) * cosf(alpha),
-                r * sinf(latR),
-                r * cosf(latR) * sinf(alpha)
-            };
-            // Use the exact same transform as the textured globe so markers pin to the texture.
-            return Vector3Transform(modelPos, earthModel.transform);
+            return { r * cosf(latR) * cosf(alpha),
+                     r * sinf(latR),
+                     r * cosf(latR) * sinf(alpha) };
         };
+        // World-space position, pinned to the textured globe (same transform as the mesh).
+        auto geoToWorld = [&](float lat_deg, float lon_deg, float altitude) -> Vector3 {
+            return Vector3Transform(geoToModel(lat_deg, lon_deg, altitude), earthModel.transform);
+        };
+        // km of altitude → scene units above the surface.
+        const float KM_TO_SCENE = EARTH_RADIUS / 6371.0f;
 
         Vector3 stationPositions[STATION_COUNT];
         for (int i = 0; i < STATION_COUNT; i++)
@@ -236,10 +235,10 @@ int main()
 
         Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
         try {
-            auto rawPos = FetchTLE::getScenePosition(sgp4);
-            satPos = Vector3Transform(
-                {rawPos[0], rawPos[1], rawPos[2]},
-                MatrixRotateZ(23.44f * DEG2RAD));
+            // Place the satellite over its true geodetic sub-point, at altitude, pinned to
+            // the textured globe — identical convention to the ground stations.
+            auto sub = FetchTLE::getSubPoint(sgp4);
+            satPos = geoToWorld(sub[0], sub[1], sub[2] * KM_TO_SCENE);
         } catch (const std::exception& e) {
             TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
         }
@@ -247,31 +246,30 @@ int main()
         if ((int)trail.size() >= TRAIL_LENGTH) trail.erase(trail.begin());
         trail.push_back(satPos);
 
-        // TEMP DIAG: park camera over the ISS dot to read the texture beneath it
-        static int _diagFrame = 0; _diagFrame++;
-        camera.position = Vector3Scale(Vector3Normalize(satPos), 13.0f);
-        camera.target = Vector3Zero(); camera.up = (Vector3){0,1,0};
-
         futureTimer += GetFrameTime();
         if (futureTimer >= FUTURE_UPDATE_S) {
             futureTimer = 0.0f;
             futurePath.clear();
-            double eraBase = EarthSim::getCurrentRotationAngle();
-            const double ERA_RATE_DEG_PER_MIN = 360.0 * 1.00273781191135448 / 1440.0;
-            auto rawFuture = FetchTLE::getFuturePositions(sgp4, FUTURE_POINTS, FUTURE_INTERVAL);
-            for (int i = 0; i < (int)rawFuture.size(); i++) {
-                float rx = rawFuture[i][0], ry = rawFuture[i][1], rz = rawFuture[i][2];
-                float r       = sqrtf(rx*rx + ry*ry + rz*rz);
-                float latR    = asinf(ry / r);
-                float eclonR  = atan2f(-rx, -rz);
-                double eraI   = eraBase + ERA_RATE_DEG_PER_MIN * i * (double)FUTURE_INTERVAL;
-                float glonR   = eclonR - (float)(eraI * DEG2RAD);
-                float alphaI  = 22.5f * DEG2RAD - glonR;
-                futurePath.push_back({
-                    r * cosf(latR) * cosf(alphaI),
-                    r * sinf(latR),
-                    r * cosf(latR) * sinf(alphaI)
-                });
+            // SGP4 ground-track prediction: geodetic sub-points stored in model space so they
+            // co-rotate with the texture when drawn via earthModel.transform.
+            auto futureSub = FetchTLE::getFutureSubPoints(sgp4, FUTURE_POINTS, FUTURE_INTERVAL);
+            for (auto& s : futureSub)
+                futurePath.push_back(geoToModel(s[0], s[1], s[2] * KM_TO_SCENE));
+
+            // Two-body Kepler prediction from the current ECI state, over the same samples.
+            // Diverges from SGP4 because it omits J2/drag — the comparison is the point.
+            keplerPath.clear();
+            kepEl = OrbitalMechanics::fromStateVector(FetchTLE::getStateVector(sgp4));
+            libsgp4::DateTime kEpoch = libsgp4::DateTime::Now(true);
+            for (int i = 0; i < FUTURE_POINTS; i++) {
+                double dtSec = (double)i * FUTURE_INTERVAL * 60.0;
+                auto p = OrbitalMechanics::propagate(kepEl, dtSec);
+                libsgp4::CoordGeodetic g =
+                    libsgp4::Eci(kEpoch.AddSeconds(dtSec),
+                                 libsgp4::Vector(p[0], p[1], p[2])).ToGeodetic();
+                keplerPath.push_back(geoToModel((float)(g.latitude  * RAD2DEG),
+                                                (float)(g.longitude * RAD2DEG),
+                                                (float)(g.altitude  * KM_TO_SCENE)));
             }
         }
 
@@ -357,6 +355,16 @@ int main()
         rlEnd();
         EndBlendMode();
         rlEnableBackfaceCulling();
+
+        // Two-body Kepler prediction — thin cyan line, for comparison with SGP4 above
+        BeginBlendMode(BLEND_ALPHA);
+        for (int i = 1; i < (int)keplerPath.size(); i++) {
+            Vector3 k0 = Vector3Transform(keplerPath[i - 1], earthModel.transform);
+            Vector3 k1 = Vector3Transform(keplerPath[i],     earthModel.transform);
+            unsigned char a = (unsigned char)((1.0f - (float)i / FUTURE_POINTS) * 220.0f);
+            DrawLine3D(k0, k1, (Color){60, 230, 220, a});
+        }
+        EndBlendMode();
 
         // Satellite model + bright beacon (will bloom)
         float satScale = 0.01f;
@@ -485,6 +493,29 @@ int main()
                    (tle.MeanMotion() * 2 * PI * (6371.0f + altitudeKm)) / 86400.0),
                    {screenW - sidebarWidth + 20, (float)(startY + spacing * 4)}, 18, 2, RAYWHITE);
 
+        // Keplerian (two-body) orbital elements derived from the live state vector
+        if (kepEl.valid) {
+            float kx = screenW - sidebarWidth + 20;
+            float ky = startY + spacing * 5 + 16;
+            DrawTextEx(font_bold, "ORBITAL ELEMENTS (2-BODY)", {kx, ky}, 16, 1.5f,
+                       (Color){60, 230, 220, 255});
+            DrawLine((int)kx, (int)(ky + 22), (int)(screenW - 20), (int)(ky + 22), GRAY);
+            const char* rows[] = {
+                TextFormat("Semi-major axis: %.1f km", kepEl.a),
+                TextFormat("Eccentricity:    %.5f", kepEl.e),
+                TextFormat("Inclination:     %.3f deg", kepEl.i * RAD2DEG),
+                TextFormat("RAAN:            %.3f deg", kepEl.raan * RAD2DEG),
+                TextFormat("Arg. perigee:    %.3f deg", kepEl.argp * RAD2DEG),
+                TextFormat("Period:          %.2f min", kepEl.period / 60.0),
+                TextFormat("Apogee alt:      %.1f km", kepEl.apogeeAltKm()),
+                TextFormat("Perigee alt:     %.1f km", kepEl.perigeeAltKm()),
+            };
+            for (int r = 0; r < 8; r++)
+                DrawTextEx(font, rows[r], {kx, ky + 30.0f + r * 24.0f}, 16, 1, RAYWHITE);
+            DrawTextEx(font, "cyan = 2-body  /  orange = SGP4",
+                       {kx, ky + 30.0f + 8 * 24.0f + 4.0f}, 14, 1, (Color){150,150,150,255});
+        }
+
         DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear),
                    {10, 10}, 20, 2, YELLOW);
 
@@ -496,9 +527,7 @@ int main()
                 TraceLog(LOG_INFO, "Selected Option Index: %d", activeDropdown);
         }
 
-        if (_diagFrame == 90) TakeScreenshot("satdiag.png");
         EndDrawing();
-        if (_diagFrame >= 91) break;
     }
 
     UnloadRenderTexture(sceneTarget);

@@ -8,6 +8,7 @@
 #include "Tle.h"
 #include "SGP4.h"
 #include "Eci.h"
+#include "CoordGeodetic.h"
 #include "DateTime.h"
 #include "Vector.h"
 
@@ -117,45 +118,42 @@ namespace FetchTLE {
         return Tle(line0, line1, line2);
     }
 
-    std::array<float, 3> getScenePosition(const libsgp4::SGP4& sgp4) {
-        DateTime now = DateTime::Now(true);
-        Eci eci = sgp4.FindPosition(now);
-        Vector eciPos = eci.Position();
+    static constexpr double RAD2DEG = 57.29577951308232;
 
-        const float SCALE = 5.0f / 6371.0f;
-
-        // ECI → Raylib mapping (accounts for OBJ sphere UV chirality):
-        //   ECI Z (North Pole)  → Raylib Y (up)
-        //   −ECI Y              → Raylib X  (east = CW in OBJ model space, so X is negated)
-        //   −ECI X (vernal eq.) → Raylib Z
-        // Earth spin uses MatrixRotateY(+ERA + 112.5°) — positive ERA, 112.5° phase offset.
-        return { (float)(-eciPos.y * SCALE), (float)(eciPos.z * SCALE), (float)(-eciPos.x * SCALE) };
+    // Geodetic sub-satellite point for the current instant.
+    std::array<float, 3> getSubPoint(const libsgp4::SGP4& sgp4) {
+        Eci eci = sgp4.FindPosition(DateTime::Now(true));
+        CoordGeodetic geo = eci.ToGeodetic();
+        return { (float)(geo.latitude * RAD2DEG),
+                 (float)(geo.longitude * RAD2DEG),
+                 (float)geo.altitude };
     }
 
-    std::vector<std::array<float, 3>> getFuturePositions(const libsgp4::SGP4& sgp4, int numPoints, double intervalMinutes) {
-        std::vector<std::array<float, 3>> positions;
-        positions.reserve(numPoints);
-
-        const float SCALE = 5.0f / 6371.0f;
+    // Geodetic sub-points sampled forward in time (for the ground-track prediction).
+    std::vector<std::array<float, 3>> getFutureSubPoints(const libsgp4::SGP4& sgp4,
+                                                         int numPoints, double intervalMinutes) {
+        std::vector<std::array<float, 3>> points;
+        points.reserve(numPoints);
         DateTime now = DateTime::Now(true);
-
         for (int i = 0; i < numPoints; i++) {
             try {
-                DateTime future = now.AddMinutes(i * intervalMinutes);
-                Eci eci = sgp4.FindPosition(future);
-                Vector eciPos = eci.Position();
-                positions.push_back({
-                    (float)(-eciPos.y * SCALE),
-                    (float)(eciPos.z * SCALE),
-                    (float)(-eciPos.x * SCALE)
-                });
+                Eci eci = sgp4.FindPosition(now.AddMinutes(i * intervalMinutes));
+                CoordGeodetic geo = eci.ToGeodetic();
+                points.push_back({ (float)(geo.latitude * RAD2DEG),
+                                   (float)(geo.longitude * RAD2DEG),
+                                   (float)geo.altitude });
             } catch (...) {
-                // Stop on propagation failure (satellite decayed or out of range)
-                break;
+                break; // satellite decayed or propagation out of range
             }
         }
+        return points;
+    }
 
-        return positions;
+    std::array<double, 6> getStateVector(const libsgp4::SGP4& sgp4) {
+        Eci eci = sgp4.FindPosition(DateTime::Now(true));
+        Vector p = eci.Position();
+        Vector v = eci.Velocity();
+        return { p.x, p.y, p.z, v.x, v.y, v.z };
     }
 
 } // namespace FetchTLE

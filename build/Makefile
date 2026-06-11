@@ -153,6 +153,30 @@ EarthMath.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.s
 .PHONY : EarthMath.cpp.s
 
+OrbitalMechanics.o: OrbitalMechanics.cpp.o
+.PHONY : OrbitalMechanics.o
+
+# target to build an object file
+OrbitalMechanics.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.o
+.PHONY : OrbitalMechanics.cpp.o
+
+OrbitalMechanics.i: OrbitalMechanics.cpp.i
+.PHONY : OrbitalMechanics.i
+
+# target to preprocess a source file
+OrbitalMechanics.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.i
+.PHONY : OrbitalMechanics.cpp.i
+
+OrbitalMechanics.s: OrbitalMechanics.cpp.s
+.PHONY : OrbitalMechanics.s
+
+# target to generate assembly for a file
+OrbitalMechanics.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.s
+.PHONY : OrbitalMechanics.cpp.s
+
 SunMath.o: SunMath.cpp.o
 .PHONY : SunMath.o
 
@@ -621,6 +645,9 @@ help:
 	@echo "... EarthMath.o"
 	@echo "... EarthMath.i"
 	@echo "... EarthMath.s"
+	@echo "... OrbitalMechanics.o"
+	@echo "... OrbitalMechanics.i"
+	@echo "... OrbitalMechanics.s"
 	@echo "... SunMath.o"
 	@echo "... SunMath.i"
 	@echo "... SunMath.s"

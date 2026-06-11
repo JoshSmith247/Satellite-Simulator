@@ -11,11 +11,12 @@ find_package(CURL REQUIRED)
 
 file(GLOB SGP4_SOURCES "third_party/sgp4/libsgp4/*.cc")
 
-add_executable(sat_sim 
-    main.cpp 
-    SunMath.cpp 
+add_executable(sat_sim
+    main.cpp
+    SunMath.cpp
     EarthMath.cpp
     fetchTLE.cpp
+    OrbitalMechanics.cpp
     ${SGP4_SOURCES}
 )
 
