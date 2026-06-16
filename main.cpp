@@ -145,6 +145,9 @@ int main()
     satModel.materials[0].shader = satShader;
 
     // ── Fonts ────────────────────────────────────────────────────────────────
+    // Rasterize glyphs at a high base size; mipmaps + trilinear keep them smooth when the
+    // UI is drawn at small point sizes (and scaled up to the framebuffer), instead of the
+    // aliasing you get downsampling a 96px atlas with plain bilinear and no mip levels.
     Font font      = LoadFontEx("Roboto-Med.ttf",      96, 0, 0);
     Font font_bold = LoadFontEx("Montserrat-Bold.ttf", 96, 0, 0);
 
@@ -153,8 +156,10 @@ int main()
         font      = GetFontDefault();
         font_bold = GetFontDefault();
     } else {
-        SetTextureFilter(font.texture,      TEXTURE_FILTER_BILINEAR);
-        SetTextureFilter(font_bold.texture, TEXTURE_FILTER_BILINEAR);
+        GenTextureMipmaps(&font.texture);
+        GenTextureMipmaps(&font_bold.texture);
+        SetTextureFilter(font.texture,      TEXTURE_FILTER_TRILINEAR);
+        SetTextureFilter(font_bold.texture, TEXTURE_FILTER_TRILINEAR);
     }
 
     // ── Ground stations ──────────────────────────────────────────────────────
@@ -427,6 +432,11 @@ int main()
         // ── Phase 4: Composite scene + bloom + 2D UI ─────────────────────────
         BeginDrawing();
 
+        // Composite to the full framebuffer. On HiDPI the framebuffer (GetRenderWidth/Height)
+        // is larger than the logical screen (GetScreenWidth/Height), and raylib draws 1:1 —
+        // so using render size fills the whole window instead of leaving black margins.
+        fullDst = {0, 0, (float)GetRenderWidth(), (float)GetRenderHeight()};
+
         // Base scene
         DrawTexturePro(sceneTarget.texture, fullSrc, fullDst, {0, 0}, 0.0f, WHITE);
 
@@ -437,9 +447,14 @@ int main()
         EndBlendMode();
 
         // ── 2D UI overlay ─────────────────────────────────────────────────────
+        // The UI is authored in logical-screen coords (matching GetWorldToScreen and the
+        // mouse). On HiDPI the framebuffer is larger, so scale the whole 2D pass up to fill
+        // it — keeps the intended text size and layout while spanning the full window.
         float screenW      = (float)GetScreenWidth();
         float screenH      = (float)GetScreenHeight();
         float sidebarWidth = 300.0f;
+        rlPushMatrix();
+        rlScalef((float)GetRenderWidth() / screenW, (float)GetRenderHeight() / screenH, 1.0f);
 
         // Floating station labels — follow the 3D marker so geography is unambiguous
         for (int i = 0; i < STATION_COUNT; i++) {
@@ -496,24 +511,26 @@ int main()
         // Keplerian (two-body) orbital elements derived from the live state vector
         if (kepEl.valid) {
             float kx = screenW - sidebarWidth + 20;
-            float ky = startY + spacing * 5 + 16;
+            float ky = startY + spacing * 10 + 10;  // below the telemetry + dropdown
             DrawTextEx(font_bold, "ORBITAL ELEMENTS (2-BODY)", {kx, ky}, 16, 1.5f,
                        (Color){60, 230, 220, 255});
             DrawLine((int)kx, (int)(ky + 22), (int)(screenW - 20), (int)(ky + 22), GRAY);
-            const char* rows[] = {
-                TextFormat("Semi-major axis: %.1f km", kepEl.a),
-                TextFormat("Eccentricity:    %.5f", kepEl.e),
-                TextFormat("Inclination:     %.3f deg", kepEl.i * RAD2DEG),
-                TextFormat("RAAN:            %.3f deg", kepEl.raan * RAD2DEG),
-                TextFormat("Arg. perigee:    %.3f deg", kepEl.argp * RAD2DEG),
-                TextFormat("Period:          %.2f min", kepEl.period / 60.0),
-                TextFormat("Apogee alt:      %.1f km", kepEl.apogeeAltKm()),
-                TextFormat("Perigee alt:     %.1f km", kepEl.perigeeAltKm()),
+            // Draw each row inline — TextFormat cycles a few static buffers, so a pre-built
+            // array of its pointers would alias (later rows overwrite earlier ones).
+            float ry = ky + 30.0f;
+            auto row = [&](const char* s) {
+                DrawTextEx(font, s, {kx, ry}, 16, 1, RAYWHITE); ry += 24.0f;
             };
-            for (int r = 0; r < 8; r++)
-                DrawTextEx(font, rows[r], {kx, ky + 30.0f + r * 24.0f}, 16, 1, RAYWHITE);
+            row(TextFormat("Semi-major axis: %.1f km",  kepEl.a));
+            row(TextFormat("Eccentricity:    %.5f",     kepEl.e));
+            row(TextFormat("Inclination:     %.3f deg", kepEl.i    * RAD2DEG));
+            row(TextFormat("RAAN:            %.3f deg", kepEl.raan * RAD2DEG));
+            row(TextFormat("Arg. perigee:    %.3f deg", kepEl.argp * RAD2DEG));
+            row(TextFormat("Period:          %.2f min", kepEl.period / 60.0));
+            row(TextFormat("Apogee alt:      %.1f km",  kepEl.apogeeAltKm()));
+            row(TextFormat("Perigee alt:     %.1f km",  kepEl.perigeeAltKm()));
             DrawTextEx(font, "cyan = 2-body  /  orange = SGP4",
-                       {kx, ky + 30.0f + 8 * 24.0f + 4.0f}, 14, 1, (Color){150,150,150,255});
+                       {kx, ry + 4.0f}, 14, 1, (Color){150,150,150,255});
         }
 
         DrawTextEx(font, TextFormat("Day of Year: %.2f", sun.dayOfYear),
@@ -526,6 +543,8 @@ int main()
             if (!dropDownEditMode)
                 TraceLog(LOG_INFO, "Selected Option Index: %d", activeDropdown);
         }
+
+        rlPopMatrix();  // end UI scale-to-framebuffer
 
         EndDrawing();
     }
