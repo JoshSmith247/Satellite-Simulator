@@ -2,9 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 project(SatelliteSim)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Tell CMake where to look for Homebrew libraries on Apple Silicon
-list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/raylib")
+# Help CMake find a Homebrew-installed raylib without hardcoding one layout:
+# Apple Silicon (/opt/homebrew) and Intel (/usr/local) both work, and an
+# explicit -DCMAKE_PREFIX_PATH or a system/package-manager install still wins.
+if(APPLE)
+    list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/raylib" "/usr/local/opt/raylib")
+endif()
 
 find_package(raylib REQUIRED)
 find_package(CURL REQUIRED)
@@ -17,6 +22,8 @@ add_executable(sat_sim
     EarthMath.cpp
     fetchTLE.cpp
     OrbitalMechanics.cpp
+    SimClock.cpp
+    PassPredict.cpp
     ${SGP4_SOURCES}
 )
 

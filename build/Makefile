@@ -177,6 +177,54 @@ OrbitalMechanics.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.s
 .PHONY : OrbitalMechanics.cpp.s
 
+PassPredict.o: PassPredict.cpp.o
+.PHONY : PassPredict.o
+
+# target to build an object file
+PassPredict.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.o
+.PHONY : PassPredict.cpp.o
+
+PassPredict.i: PassPredict.cpp.i
+.PHONY : PassPredict.i
+
+# target to preprocess a source file
+PassPredict.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.i
+.PHONY : PassPredict.cpp.i
+
+PassPredict.s: PassPredict.cpp.s
+.PHONY : PassPredict.s
+
+# target to generate assembly for a file
+PassPredict.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.s
+.PHONY : PassPredict.cpp.s
+
+SimClock.o: SimClock.cpp.o
+.PHONY : SimClock.o
+
+# target to build an object file
+SimClock.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.o
+.PHONY : SimClock.cpp.o
+
+SimClock.i: SimClock.cpp.i
+.PHONY : SimClock.i
+
+# target to preprocess a source file
+SimClock.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.i
+.PHONY : SimClock.cpp.i
+
+SimClock.s: SimClock.cpp.s
+.PHONY : SimClock.s
+
+# target to generate assembly for a file
+SimClock.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.s
+.PHONY : SimClock.cpp.s
+
 SunMath.o: SunMath.cpp.o
 .PHONY : SunMath.o
 
@@ -648,6 +696,12 @@ help:
 	@echo "... OrbitalMechanics.o"
 	@echo "... OrbitalMechanics.i"
 	@echo "... OrbitalMechanics.s"
+	@echo "... PassPredict.o"
+	@echo "... PassPredict.i"
+	@echo "... PassPredict.s"
+	@echo "... SimClock.o"
+	@echo "... SimClock.i"
+	@echo "... SimClock.s"
 	@echo "... SunMath.o"
 	@echo "... SunMath.i"
 	@echo "... SunMath.s"

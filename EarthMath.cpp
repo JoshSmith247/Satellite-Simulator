@@ -16,21 +16,23 @@ double getJulianDate() {
     return (seconds / 86400.0) + 2440587.5;
 }
 
-double getCurrentRotationAngle() {
-    double jd = getJulianDate();
-    
+double getRotationAngle(double jd) {
     // Constant for the Julian Date of J2000 epoch
     const double t = jd - 2451545.0;
-    
+
     // Earth Rotation Angle (ERA) formula (IERS standard)
     // Returns the angle in fractions of a circle, then converted to degrees
     double angle = 360.0 * (0.779057273264 + 1.00273781191135448 * t);
-    
+
     // Keep the result between 0 and 360 degrees
     angle = std::fmod(angle, 360.0);
     if (angle < 0) angle += 360.0;
-    
+
     return angle;
+}
+
+double getCurrentRotationAngle() {
+    return getRotationAngle(getJulianDate());
 }
 
 } // namespace EarthSim

@@ -4,6 +4,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fstream>
+#include <filesystem>
+#include <system_error>
 #include <curl/curl.h>
 #include "Tle.h"
 #include "SGP4.h"
@@ -120,24 +123,24 @@ namespace FetchTLE {
 
     static constexpr double RAD2DEG = 57.29577951308232;
 
-    // Geodetic sub-satellite point for the current instant.
-    std::array<float, 3> getSubPoint(const libsgp4::SGP4& sgp4) {
-        Eci eci = sgp4.FindPosition(DateTime::Now(true));
+    // Geodetic sub-satellite point at the given instant.
+    std::array<float, 3> getSubPoint(const libsgp4::SGP4& sgp4, const DateTime& when) {
+        Eci eci = sgp4.FindPosition(when);
         CoordGeodetic geo = eci.ToGeodetic();
         return { (float)(geo.latitude * RAD2DEG),
                  (float)(geo.longitude * RAD2DEG),
                  (float)geo.altitude };
     }
 
-    // Geodetic sub-points sampled forward in time (for the ground-track prediction).
+    // Geodetic sub-points sampled forward from `start` (for the ground-track prediction).
     std::vector<std::array<float, 3>> getFutureSubPoints(const libsgp4::SGP4& sgp4,
-                                                         int numPoints, double intervalMinutes) {
+                                                         int numPoints, double intervalMinutes,
+                                                         const DateTime& start) {
         std::vector<std::array<float, 3>> points;
         points.reserve(numPoints);
-        DateTime now = DateTime::Now(true);
         for (int i = 0; i < numPoints; i++) {
             try {
-                Eci eci = sgp4.FindPosition(now.AddMinutes(i * intervalMinutes));
+                Eci eci = sgp4.FindPosition(start.AddMinutes(i * intervalMinutes));
                 CoordGeodetic geo = eci.ToGeodetic();
                 points.push_back({ (float)(geo.latitude * RAD2DEG),
                                    (float)(geo.longitude * RAD2DEG),
@@ -149,11 +152,45 @@ namespace FetchTLE {
         return points;
     }
 
-    std::array<double, 6> getStateVector(const libsgp4::SGP4& sgp4) {
-        Eci eci = sgp4.FindPosition(DateTime::Now(true));
+    std::array<double, 6> getStateVector(const libsgp4::SGP4& sgp4, const DateTime& when) {
+        Eci eci = sgp4.FindPosition(when);
         Vector p = eci.Position();
         Vector v = eci.Velocity();
         return { p.x, p.y, p.z, v.x, v.y, v.z };
+    }
+
+    // Filesystem-friendly cache path for a NORAD ID's last good TLE.
+    static std::string cachePath(const std::string& noradID) {
+        return "tle_cache/" + noradID + ".tle";
+    }
+
+    std::string fetchTLECached(const std::string& noradID, bool* fromCache) {
+        if (fromCache) *fromCache = false;
+
+        std::string raw = fetchTLE(noradID);
+        if (validateTLE(raw)) {
+            // Persist the fresh TLE for offline use next time.
+            std::error_code ec;
+            std::filesystem::create_directories("tle_cache", ec);
+            std::ofstream out(cachePath(noradID), std::ios::binary | std::ios::trunc);
+            if (out) out << raw;
+            return raw;
+        }
+
+        // Network failed or returned junk — fall back to the cached copy.
+        std::ifstream in(cachePath(noradID), std::ios::binary);
+        if (in) {
+            std::stringstream ss;
+            ss << in.rdbuf();
+            std::string cached = ss.str();
+            if (validateTLE(cached)) {
+                std::cerr << "Using cached TLE for NORAD " << noradID
+                          << " (network fetch failed)" << std::endl;
+                if (fromCache) *fromCache = true;
+                return cached;
+            }
+        }
+        return std::string();
     }
 
 } // namespace FetchTLE
