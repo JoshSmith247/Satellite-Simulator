@@ -249,12 +249,23 @@ int main()
 
     bool showMap    = false;
     bool showEditor = false;
+
+    // ── Hohmann transfer mode ──────────────────────────────────────────────────
+    bool   showHohmann   = false;
+    double targetAltKm   = 1000.0;          // target circular-orbit altitude
+    char   targetAltBuf[16] = "1000";
+    bool   targetAltEdit = false;
+    OrbitalMechanics::Hohmann hoh;          // last computed transfer
+    bool    hohValid = false;
+    Vector3 hohBurn1W{}, hohBurn2W{};       // burn-point world positions (for 2D labels)
+
     bool autoExport = false;
     // Verification aid: SATSIM_OPEN=map,edit,export opens panels / exports at startup.
     if (const char* o = getenv("SATSIM_OPEN")) {
-        if (std::strstr(o, "map"))    showMap    = true;
-        if (std::strstr(o, "edit"))   showEditor = true;
-        if (std::strstr(o, "export")) autoExport = true;
+        if (std::strstr(o, "map"))     showMap     = true;
+        if (std::strstr(o, "edit"))    showEditor  = true;
+        if (std::strstr(o, "export"))  autoExport  = true;
+        if (std::strstr(o, "hohmann")) showHohmann = true;
     }
 
     // Station/link editor field buffers + which one is being edited.
@@ -332,7 +343,7 @@ int main()
         }
         bool loading = loadFuture.valid();
 
-        bool textActive   = noradEditMode || activeEditField != -1;
+        bool textActive   = noradEditMode || activeEditField != -1 || targetAltEdit;
         bool blockCamera  = textActive || showEditor;
 
         // ── Input: camera ──────────────────────────────────────────────────────
@@ -359,6 +370,7 @@ int main()
         if (!textActive) {
             if (IsKeyPressed(KEY_F)) ToggleFullscreen();
             if (IsKeyPressed(KEY_M)) showMap = !showMap;
+            if (IsKeyPressed(KEY_H)) showHohmann = !showHohmann;
             if (IsKeyPressed(KEY_E)) { showEditor = !showEditor; if (showEditor) syncEditorBuffers(); }
             if (IsKeyPressed(KEY_C)) exportPasses();
             if (IsKeyPressed(KEY_SPACE)) clock.togglePause();
@@ -410,6 +422,16 @@ int main()
             return Vector3Transform(geoToModel(lat_deg, lon_deg, altitude), earthModel.transform);
         };
         const float KM_TO_SCENE = EARTH_RADIUS / 6371.0f;
+
+        // Inertial ECI (km) -> scene. Canonical mapping (X=-ECI_Y, Y=ECI_Z, Z=-ECI_X)
+        // with Earth's axial tilt applied, but NOT the daily spin — orbits are inertial,
+        // so they stay fixed while the textured Earth rotates beneath them.
+        auto sceneFromEci = [&](const std::array<double, 3>& p) -> Vector3 {
+            Vector3 v = { -(float)p[1] * KM_TO_SCENE,
+                           (float)p[2] * KM_TO_SCENE,
+                          -(float)p[0] * KM_TO_SCENE };
+            return Vector3Transform(v, tilt);
+        };
 
         std::vector<Vector3> stationPositions(stations.size());
         for (size_t i = 0; i < stations.size(); i++)
@@ -504,7 +526,7 @@ int main()
         // Observed path — the actual session record of where the satellite has been,
         // billboard quads, brightest near the satellite and fading into the past.
         // Co-rotates with the globe (model space); NaN entries break the line at jumps.
-        int pastCount = (int)observedPath.size();
+        int pastCount = showHohmann ? 0 : (int)observedPath.size();
         rlDisableBackfaceCulling();
         BeginBlendMode(BLEND_ADDITIVE);
         rlBegin(RL_QUADS);
@@ -531,7 +553,7 @@ int main()
         rlEnableBackfaceCulling();
 
         // Future ground track — billboard quads, orange, fading
-        int futureCount = (int)futurePath.size();
+        int futureCount = showHohmann ? 0 : (int)futurePath.size();
         if (futureCount > 0) {
             Vector3 futureOrigin = Vector3Transform(futurePath[0], earthModel.transform);
             BeginBlendMode(BLEND_ALPHA);
@@ -563,8 +585,9 @@ int main()
         rlEnableBackfaceCulling();
 
         // Two-body Kepler prediction — thin cyan line
+        int keplerCount = showHohmann ? 0 : (int)keplerPath.size();
         BeginBlendMode(BLEND_ALPHA);
-        for (int i = 1; i < (int)keplerPath.size(); i++) {
+        for (int i = 1; i < keplerCount; i++) {
             Vector3 k0 = Vector3Transform(keplerPath[i - 1], earthModel.transform);
             Vector3 k1 = Vector3Transform(keplerPath[i],     earthModel.transform);
             unsigned char a = (unsigned char)((1.0f - (float)i / FUTURE_POINTS) * 220.0f);
@@ -572,12 +595,83 @@ int main()
         }
         EndBlendMode();
 
-        // Satellite model + bright beacon
-        if (sgp4) {
+        // Satellite model + bright beacon (hidden in Hohmann mode, which uses its own
+        // inertial orbit diagram + transfer-spacecraft marker instead).
+        if (sgp4 && !showHohmann) {
             float satScale = 0.01f;
             DrawModelEx(satModel, satPos, (Vector3){0, 1, 0}, 0.0f,
                 (Vector3){satScale, satScale, satScale}, WHITE);
             DrawSphere(satPos, 0.07f, {255, 235, 160, 255});
+        }
+
+        // ── Hohmann transfer visualization (inertial orbits) ──────────────────
+        hohValid = false;
+        if (showHohmann && kepEl.valid) {
+            const double PI_D = 3.14159265358979323846, TWO_PI_D = 2.0 * PI_D;
+            const double EARTH_R_KM = 6371.0;        // scene reference radius (matches KM_TO_SCENE)
+            double r1 = kepEl.a;                      // initial circular radius (km)
+            double r2 = EARTH_R_KM + targetAltKm;     // target circular radius (km)
+            hoh = OrbitalMechanics::computeHohmann(r1, r2);
+            hohValid = true;
+            double inc = kepEl.i, raan = kepEl.raan;
+            bool   raising = hoh.raising;
+
+            // Burn 1 is at the current orbit radius r1 — the transfer's PERIapsis when
+            // raising, but its APOapsis when lowering. Orient the ellipse so that apsis
+            // lands at the satellite's current in-plane angle (argp + true anomaly).
+            double nuBurn1 = raising ? 0.0 : PI_D;
+            double nuBurn2 = raising ? PI_D : 0.0;
+            double argpT   = kepEl.argp + kepEl.nu0 - nuBurn1;
+            double pathN0  = nuBurn1;                  // coasting arc from burn 1 ...
+            double pathN1  = raising ? PI_D : TWO_PI_D; // ... to burn 2
+
+            auto orbitPt = [&](double a, double e, double ap, double nu) {
+                return sceneFromEci(OrbitalMechanics::orbitPositionAt(a, e, inc, raan, ap, nu));
+            };
+            auto drawArc = [&](double a, double e, double ap, double n0, double n1, int seg, Color c) {
+                Vector3 prev{};
+                for (int k = 0; k <= seg; k++) {
+                    double nu = n0 + (n1 - n0) * (double)k / seg;
+                    Vector3 s = orbitPt(a, e, ap, nu);
+                    if (k > 0) DrawLine3D(prev, s, c);
+                    prev = s;
+                }
+            };
+            // Initial orbit (blue), target orbit (green), transfer arc burn1->burn2 (orange).
+            drawArc(r1, 0.0, argpT, 0.0, TWO_PI_D, 160, (Color){ 90, 180, 255, 170});
+            drawArc(r2, 0.0, argpT, 0.0, TWO_PI_D, 160, (Color){ 80, 235, 140, 170});
+            drawArc(hoh.aTransfer, hoh.eTransfer, argpT, pathN0, pathN1, 128, (Color){255, 150, 40, 255});
+
+            // Burn points (also the transfer's apsides): burn 1 at r1, burn 2 at r2.
+            hohBurn1W = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nuBurn1);
+            hohBurn2W = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nuBurn2);
+            DrawSphere(hohBurn1W, 0.13f, (Color){255, 180, 60, 255});
+            DrawSphere(hohBurn2W, 0.13f, (Color){120, 255, 160, 255});
+
+            // Thruster icons: an exhaust cone at each burn, pointing opposite the thrust
+            // (thrust is prograde when raising, retrograde when lowering — same at both burns).
+            auto thruster = [&](Vector3 at, double nu) {
+                Vector3 ahead  = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nu + 0.04);
+                Vector3 behind = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nu - 0.04);
+                Vector3 prog   = Vector3Normalize(Vector3Subtract(ahead, behind));
+                Vector3 thrust = raising ? prog : Vector3Negate(prog);
+                Vector3 exhaust = Vector3Negate(thrust);     // plume opposite thrust
+                rlDisableBackfaceCulling();
+                DrawCylinderEx(at, Vector3Add(at, Vector3Scale(exhaust, 0.55f)), 0.10f, 0.0f, 10,
+                               (Color){255, 150, 40, 255});
+                BeginBlendMode(BLEND_ADDITIVE);
+                DrawCylinderEx(at, Vector3Add(at, Vector3Scale(exhaust, 0.85f)), 0.05f, 0.0f, 10,
+                               (Color){255, 230, 120, 150});
+                EndBlendMode();
+                rlEnableBackfaceCulling();
+            };
+            thruster(hohBurn1W, nuBurn1);
+            thruster(hohBurn2W, nuBurn2);
+
+            // Spacecraft coasting along the transfer (visual animation, loops burn1 -> burn2).
+            double ph = fmod(GetTime() * 0.12, 1.0);
+            DrawSphere(orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, pathN0 + (pathN1 - pathN0) * ph),
+                       0.10f, WHITE);
         }
 
         // Ground stations
@@ -703,10 +797,52 @@ int main()
         DrawTextEx(font, TextFormat("%s   x%g   Day %.2f",
                    clock.isPaused() ? "PAUSED" : "RUN", clock.speed(), sun.dayOfYear),
                    {10, 34}, 16, 1, clock.isPaused() ? ORANGE : LIME);
-        DrawTextEx(font, "SPACE pause  [ ] speed  R now  N next  T station  M map  E edit  C export",
+        DrawTextEx(font, "SPACE pause  [ ] speed  R now  N next  T station  M map  E edit  C export  H hohmann",
                    {10, 54}, 13, 1, ColorAlpha(RAYWHITE, 0.7f));
         if (!exportStatus.empty())
             DrawTextEx(font, exportStatus.c_str(), {10, screenH - 18.0f}, 13, 1, (Color){120,255,140,255});
+
+        // ── Hohmann transfer panel + burn labels (toggle H) ─────────────────────
+        if (showHohmann) {
+            const float px = 360.0f, py = 80.0f, pw = 300.0f, ph = 212.0f;
+            DrawRectangleRec((Rectangle){px, py, pw, ph}, ColorAlpha(BLACK, 0.6f));
+            DrawTextEx(font_bold, "HOHMANN TRANSFER", {px + 12, py + 10}, 18, 1.5f, (Color){255, 170, 60, 255});
+            DrawLine((int)(px + 12), (int)(py + 34), (int)(px + pw - 12), (int)(py + 34), GRAY);
+            const char* a1 = hoh.raising ? "periapsis" : "apoapsis";
+            const char* a2 = hoh.raising ? "apoapsis"  : "periapsis";
+            if (hohValid) {
+                auto row = [&](const char* s, float yy, Color c) { DrawTextEx(font, s, {px + 12, yy}, 15, 1, c); };
+                row(TextFormat("Initial orbit:  %.0f km",   hoh.r1 - 6371.0),   py + 42,  (Color){ 90,180,255,255});
+                row(TextFormat("Target orbit:   %.0f km",   targetAltKm),       py + 62,  (Color){ 80,235,140,255});
+                row(TextFormat("dv1 (%s): %.0f m/s",  a1, hoh.dv1 * 1000.0),    py + 88,  RAYWHITE);
+                row(TextFormat("dv2 (%s): %.0f m/s",  a2, hoh.dv2 * 1000.0),    py + 108, RAYWHITE);
+                row(TextFormat("Total dv:        %.0f m/s", hoh.dvTotal*1000.0),py + 128, (Color){255,170,60,255});
+                int tt = (int)hoh.transferTime;
+                row(TextFormat("Transfer time:  %dh %02dm", tt / 3600, (tt % 3600) / 60), py + 148, RAYWHITE);
+            } else {
+                DrawTextEx(font, "Waiting for orbit data...", {px + 12, py + 44}, 15, 1, GRAY);
+            }
+            DrawTextEx(font, "Target alt (km):", {px + 12, py + 176}, 14, 1, LIGHTGRAY);
+            if (GuiTextBox((Rectangle){px + 128, py + 174, 90, 26}, targetAltBuf, sizeof(targetAltBuf), targetAltEdit))
+                targetAltEdit = !targetAltEdit;
+            if ((GuiButton((Rectangle){px + 226, py + 174, 62, 26}, "Set") ||
+                 (targetAltEdit && IsKeyPressed(KEY_ENTER)))) {
+                targetAltEdit = false;
+                double v = atof(targetAltBuf);
+                if (v > 50.0) targetAltKm = v;
+            }
+            // 3D burn-point labels
+            if (hohValid) {
+                Vector2 sp1 = GetWorldToScreen(hohBurn1W, camera);
+                Vector2 sp2 = GetWorldToScreen(hohBurn2W, camera);
+                DrawTextEx(font, TextFormat("BURN 1  %.0f m/s", hoh.dv1 * 1000.0),
+                           {sp1.x + 8, sp1.y - 8}, 14, 1, (Color){255, 180, 60, 255});
+                DrawTextEx(font, a1, {sp1.x + 8, sp1.y + 8}, 12, 1, ColorAlpha(RAYWHITE, 0.8f));
+                DrawTextEx(font, TextFormat("BURN 2  %.0f m/s", hoh.dv2 * 1000.0),
+                           {sp2.x + 8, sp2.y - 8}, 14, 1, (Color){120, 255, 160, 255});
+                DrawTextEx(font, a2, {sp2.x + 8, sp2.y + 8}, 12, 1, ColorAlpha(RAYWHITE, 0.8f));
+            }
+        }
 
         // ── 2D map (toggle M) ──────────────────────────────────────────────────
         if (showMap) {

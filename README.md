@@ -29,6 +29,10 @@ the Doppler shift on the radio link.
   altitude, elevation mask) and set the downlink frequency from an in-app editor.
 - **2D ground-track map** — a toggleable equirectangular world map showing the
   sub-point, predicted ground track, and station locations.
+- **Hohmann transfer mode** — a two-impulse transfer planner: enter a target
+  altitude and see the initial, transfer, and target orbits in 3D, with the
+  periapsis/apoapsis burn points, thruster icons, and the computed Δv₁/Δv₂ and
+  transfer time.
 - **CSV export** — write the predicted pass schedule to `exports/` for sharing or
   importing into a scheduling spreadsheet.
 - **SGP4 vs. two-body comparison** — the perturbed SGP4 ground track (orange) is
@@ -47,6 +51,7 @@ the Doppler shift on the radio link.
 | `N` | Jump to the next pass (10 s before AOS) |
 | `T` | Select the next ground station as the observer |
 | `M` | Toggle the 2D ground-track map |
+| `H` | Toggle Hohmann transfer mode |
 | `E` | Toggle the station / downlink editor |
 | `C` | Export the current pass schedule to CSV |
 | `F` | Toggle fullscreen |

@@ -126,4 +126,45 @@ std::array<double, 3> propagate(const Elements& el, double dtSeconds) {
              R31 * xp + R32 * yp };
 }
 
+std::array<double, 3> orbitPositionAt(double a, double e, double i,
+                                      double raan, double argp, double nu) {
+    const double p = a * (1.0 - e * e);
+    const double r = p / (1.0 + e * std::cos(nu));
+    const double xp = r * std::cos(nu);
+    const double yp = r * std::sin(nu);
+
+    const double cO = std::cos(raan), sO = std::sin(raan);
+    const double ci = std::cos(i),    si = std::sin(i);
+    const double cw = std::cos(argp), sw = std::sin(argp);
+
+    const double R11 = cO * cw - sO * sw * ci, R12 = -cO * sw - sO * cw * ci;
+    const double R21 = sO * cw + cO * sw * ci, R22 = -sO * sw + cO * cw * ci;
+    const double R31 = sw * si,                R32 = cw * si;
+
+    return { R11 * xp + R12 * yp,
+             R21 * xp + R22 * yp,
+             R31 * xp + R32 * yp };
+}
+
+Hohmann computeHohmann(double r1, double r2) {
+    Hohmann h;
+    h.r1 = r1;
+    h.r2 = r2;
+    h.raising = (r2 >= r1);
+
+    const double at = (r1 + r2) / 2.0;             // transfer-ellipse semi-major axis
+    const double v1 = std::sqrt(MU_EARTH / r1);    // circular speed, initial orbit
+    const double v2 = std::sqrt(MU_EARTH / r2);    // circular speed, target orbit
+    const double vp = std::sqrt(MU_EARTH * (2.0 / r1 - 1.0 / at));  // transfer speed at r1
+    const double va = std::sqrt(MU_EARTH * (2.0 / r2 - 1.0 / at));  // transfer speed at r2
+
+    h.aTransfer    = at;
+    h.eTransfer    = std::fabs(r2 - r1) / (r1 + r2);
+    h.dv1          = std::fabs(vp - v1);
+    h.dv2          = std::fabs(v2 - va);
+    h.dvTotal      = h.dv1 + h.dv2;
+    h.transferTime = TWO_PI / 2.0 * std::sqrt(at * at * at / MU_EARTH);  // half the ellipse period
+    return h;
+}
+
 } // namespace OrbitalMechanics

@@ -37,6 +37,22 @@ namespace OrbitalMechanics {
     // the elements were derived for.
     std::array<double, 3> propagate(const Elements& el, double dtSeconds);
 
+    // ECI position {x,y,z} (km) on an orbit at a given true anomaly (rad).
+    std::array<double, 3> orbitPositionAt(double a, double e, double i,
+                                          double raan, double argp, double nu);
+
+    // A two-impulse Hohmann transfer between two circular orbits of radius r1 -> r2 (km).
+    struct Hohmann {
+        double r1 = 0.0, r2 = 0.0;        // initial / target circular radii (km)
+        double dv1 = 0.0, dv2 = 0.0;      // burn magnitudes (km/s)
+        double dvTotal = 0.0;             // km/s
+        double transferTime = 0.0;        // seconds (perigee -> apogee)
+        double aTransfer = 0.0;           // transfer-ellipse semi-major axis (km)
+        double eTransfer = 0.0;           // transfer-ellipse eccentricity
+        bool   raising = true;            // r2 >= r1 (burns prograde) vs lowering
+    };
+    Hohmann computeHohmann(double r1, double r2);
+
 } // namespace OrbitalMechanics
 
 #endif
