@@ -39,3 +39,19 @@ add_custom_command(TARGET sat_sim POST_BUILD
         ${CMAKE_SOURCE_DIR}/assets
         ${CMAKE_BINARY_DIR}
 )
+
+# ── Tests ───────────────────────────────────────────────────────────────────
+# Headless unit tests for the orbital math — no raylib or network needed.
+# Build with -DBUILD_TESTING=OFF to skip, run with `ctest` in the build dir.
+option(BUILD_TESTING "Build unit tests" ON)
+if(BUILD_TESTING)
+    enable_testing()
+
+    add_executable(test_orbital tests/test_orbital.cpp OrbitalMechanics.cpp)
+    target_include_directories(test_orbital PRIVATE .)
+    add_test(NAME orbital COMMAND test_orbital)
+
+    add_executable(test_passpredict tests/test_passpredict.cpp PassPredict.cpp ${SGP4_SOURCES})
+    target_include_directories(test_passpredict PRIVATE . third_party/sgp4/libsgp4)
+    add_test(NAME passpredict COMMAND test_passpredict)
+endif()

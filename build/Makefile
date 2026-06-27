@@ -65,6 +65,16 @@ CMAKE_BINARY_DIR = /Users/jsmith/Documents/GitHub/Satellite-Simulator/build
 #=============================================================================
 # Targets provided globally by CMake.
 
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running tests..."
+	/opt/homebrew/bin/ctest $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+.PHONY : test/fast
+
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake cache editor..."
@@ -129,6 +139,32 @@ sat_sim/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/build
 .PHONY : sat_sim/fast
 
+#=============================================================================
+# Target rules for targets named test_orbital
+
+# Build rule for target.
+test_orbital: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_orbital
+.PHONY : test_orbital
+
+# fast build rule for target.
+test_orbital/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/build
+.PHONY : test_orbital/fast
+
+#=============================================================================
+# Target rules for targets named test_passpredict
+
+# Build rule for target.
+test_passpredict: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_passpredict
+.PHONY : test_passpredict
+
+# fast build rule for target.
+test_passpredict/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/build
+.PHONY : test_passpredict/fast
+
 EarthMath.o: EarthMath.cpp.o
 .PHONY : EarthMath.o
 
@@ -159,6 +195,7 @@ OrbitalMechanics.o: OrbitalMechanics.cpp.o
 # target to build an object file
 OrbitalMechanics.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/OrbitalMechanics.cpp.o
 .PHONY : OrbitalMechanics.cpp.o
 
 OrbitalMechanics.i: OrbitalMechanics.cpp.i
@@ -167,6 +204,7 @@ OrbitalMechanics.i: OrbitalMechanics.cpp.i
 # target to preprocess a source file
 OrbitalMechanics.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/OrbitalMechanics.cpp.i
 .PHONY : OrbitalMechanics.cpp.i
 
 OrbitalMechanics.s: OrbitalMechanics.cpp.s
@@ -175,6 +213,7 @@ OrbitalMechanics.s: OrbitalMechanics.cpp.s
 # target to generate assembly for a file
 OrbitalMechanics.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/OrbitalMechanics.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/OrbitalMechanics.cpp.s
 .PHONY : OrbitalMechanics.cpp.s
 
 PassPredict.o: PassPredict.cpp.o
@@ -183,6 +222,7 @@ PassPredict.o: PassPredict.cpp.o
 # target to build an object file
 PassPredict.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/PassPredict.cpp.o
 .PHONY : PassPredict.cpp.o
 
 PassPredict.i: PassPredict.cpp.i
@@ -191,6 +231,7 @@ PassPredict.i: PassPredict.cpp.i
 # target to preprocess a source file
 PassPredict.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/PassPredict.cpp.i
 .PHONY : PassPredict.cpp.i
 
 PassPredict.s: PassPredict.cpp.s
@@ -199,6 +240,7 @@ PassPredict.s: PassPredict.cpp.s
 # target to generate assembly for a file
 PassPredict.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/PassPredict.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/PassPredict.cpp.s
 .PHONY : PassPredict.cpp.s
 
 SimClock.o: SimClock.cpp.o
@@ -297,12 +339,61 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+tests/test_orbital.o: tests/test_orbital.cpp.o
+.PHONY : tests/test_orbital.o
+
+# target to build an object file
+tests/test_orbital.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/tests/test_orbital.cpp.o
+.PHONY : tests/test_orbital.cpp.o
+
+tests/test_orbital.i: tests/test_orbital.cpp.i
+.PHONY : tests/test_orbital.i
+
+# target to preprocess a source file
+tests/test_orbital.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/tests/test_orbital.cpp.i
+.PHONY : tests/test_orbital.cpp.i
+
+tests/test_orbital.s: tests/test_orbital.cpp.s
+.PHONY : tests/test_orbital.s
+
+# target to generate assembly for a file
+tests/test_orbital.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_orbital.dir/build.make CMakeFiles/test_orbital.dir/tests/test_orbital.cpp.s
+.PHONY : tests/test_orbital.cpp.s
+
+tests/test_passpredict.o: tests/test_passpredict.cpp.o
+.PHONY : tests/test_passpredict.o
+
+# target to build an object file
+tests/test_passpredict.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/tests/test_passpredict.cpp.o
+.PHONY : tests/test_passpredict.cpp.o
+
+tests/test_passpredict.i: tests/test_passpredict.cpp.i
+.PHONY : tests/test_passpredict.i
+
+# target to preprocess a source file
+tests/test_passpredict.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/tests/test_passpredict.cpp.i
+.PHONY : tests/test_passpredict.cpp.i
+
+tests/test_passpredict.s: tests/test_passpredict.cpp.s
+.PHONY : tests/test_passpredict.s
+
+# target to generate assembly for a file
+tests/test_passpredict.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/tests/test_passpredict.cpp.s
+.PHONY : tests/test_passpredict.cpp.s
+
 third_party/sgp4/libsgp4/CoordGeodetic.o: third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.o
 
 # target to build an object file
 third_party/sgp4/libsgp4/CoordGeodetic.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 
 third_party/sgp4/libsgp4/CoordGeodetic.i: third_party/sgp4/libsgp4/CoordGeodetic.cc.i
@@ -311,6 +402,7 @@ third_party/sgp4/libsgp4/CoordGeodetic.i: third_party/sgp4/libsgp4/CoordGeodetic
 # target to preprocess a source file
 third_party/sgp4/libsgp4/CoordGeodetic.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.i
 
 third_party/sgp4/libsgp4/CoordGeodetic.s: third_party/sgp4/libsgp4/CoordGeodetic.cc.s
@@ -319,6 +411,7 @@ third_party/sgp4/libsgp4/CoordGeodetic.s: third_party/sgp4/libsgp4/CoordGeodetic
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/CoordGeodetic.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.s
 
 third_party/sgp4/libsgp4/CoordTopocentric.o: third_party/sgp4/libsgp4/CoordTopocentric.cc.o
@@ -327,6 +420,7 @@ third_party/sgp4/libsgp4/CoordTopocentric.o: third_party/sgp4/libsgp4/CoordTopoc
 # target to build an object file
 third_party/sgp4/libsgp4/CoordTopocentric.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.o
 
 third_party/sgp4/libsgp4/CoordTopocentric.i: third_party/sgp4/libsgp4/CoordTopocentric.cc.i
@@ -335,6 +429,7 @@ third_party/sgp4/libsgp4/CoordTopocentric.i: third_party/sgp4/libsgp4/CoordTopoc
 # target to preprocess a source file
 third_party/sgp4/libsgp4/CoordTopocentric.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.i
 
 third_party/sgp4/libsgp4/CoordTopocentric.s: third_party/sgp4/libsgp4/CoordTopocentric.cc.s
@@ -343,6 +438,7 @@ third_party/sgp4/libsgp4/CoordTopocentric.s: third_party/sgp4/libsgp4/CoordTopoc
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/CoordTopocentric.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.s
 
 third_party/sgp4/libsgp4/DateTime.o: third_party/sgp4/libsgp4/DateTime.cc.o
@@ -351,6 +447,7 @@ third_party/sgp4/libsgp4/DateTime.o: third_party/sgp4/libsgp4/DateTime.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/DateTime.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.o
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.o
 
 third_party/sgp4/libsgp4/DateTime.i: third_party/sgp4/libsgp4/DateTime.cc.i
@@ -359,6 +456,7 @@ third_party/sgp4/libsgp4/DateTime.i: third_party/sgp4/libsgp4/DateTime.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/DateTime.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.i
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.i
 
 third_party/sgp4/libsgp4/DateTime.s: third_party/sgp4/libsgp4/DateTime.cc.s
@@ -367,6 +465,7 @@ third_party/sgp4/libsgp4/DateTime.s: third_party/sgp4/libsgp4/DateTime.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/DateTime.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.s
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.s
 
 third_party/sgp4/libsgp4/DecayedException.o: third_party/sgp4/libsgp4/DecayedException.cc.o
@@ -375,6 +474,7 @@ third_party/sgp4/libsgp4/DecayedException.o: third_party/sgp4/libsgp4/DecayedExc
 # target to build an object file
 third_party/sgp4/libsgp4/DecayedException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.o
 
 third_party/sgp4/libsgp4/DecayedException.i: third_party/sgp4/libsgp4/DecayedException.cc.i
@@ -383,6 +483,7 @@ third_party/sgp4/libsgp4/DecayedException.i: third_party/sgp4/libsgp4/DecayedExc
 # target to preprocess a source file
 third_party/sgp4/libsgp4/DecayedException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.i
 
 third_party/sgp4/libsgp4/DecayedException.s: third_party/sgp4/libsgp4/DecayedException.cc.s
@@ -391,6 +492,7 @@ third_party/sgp4/libsgp4/DecayedException.s: third_party/sgp4/libsgp4/DecayedExc
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/DecayedException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.s
 
 third_party/sgp4/libsgp4/Eci.o: third_party/sgp4/libsgp4/Eci.cc.o
@@ -399,6 +501,7 @@ third_party/sgp4/libsgp4/Eci.o: third_party/sgp4/libsgp4/Eci.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Eci.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.o
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.o
 
 third_party/sgp4/libsgp4/Eci.i: third_party/sgp4/libsgp4/Eci.cc.i
@@ -407,6 +510,7 @@ third_party/sgp4/libsgp4/Eci.i: third_party/sgp4/libsgp4/Eci.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Eci.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.i
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.i
 
 third_party/sgp4/libsgp4/Eci.s: third_party/sgp4/libsgp4/Eci.cc.s
@@ -415,6 +519,7 @@ third_party/sgp4/libsgp4/Eci.s: third_party/sgp4/libsgp4/Eci.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Eci.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.s
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.s
 
 third_party/sgp4/libsgp4/Globals.o: third_party/sgp4/libsgp4/Globals.cc.o
@@ -423,6 +528,7 @@ third_party/sgp4/libsgp4/Globals.o: third_party/sgp4/libsgp4/Globals.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Globals.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.o
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.o
 
 third_party/sgp4/libsgp4/Globals.i: third_party/sgp4/libsgp4/Globals.cc.i
@@ -431,6 +537,7 @@ third_party/sgp4/libsgp4/Globals.i: third_party/sgp4/libsgp4/Globals.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Globals.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.i
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.i
 
 third_party/sgp4/libsgp4/Globals.s: third_party/sgp4/libsgp4/Globals.cc.s
@@ -439,6 +546,7 @@ third_party/sgp4/libsgp4/Globals.s: third_party/sgp4/libsgp4/Globals.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Globals.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.s
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.s
 
 third_party/sgp4/libsgp4/Observer.o: third_party/sgp4/libsgp4/Observer.cc.o
@@ -447,6 +555,7 @@ third_party/sgp4/libsgp4/Observer.o: third_party/sgp4/libsgp4/Observer.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Observer.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.o
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.o
 
 third_party/sgp4/libsgp4/Observer.i: third_party/sgp4/libsgp4/Observer.cc.i
@@ -455,6 +564,7 @@ third_party/sgp4/libsgp4/Observer.i: third_party/sgp4/libsgp4/Observer.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Observer.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.i
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.i
 
 third_party/sgp4/libsgp4/Observer.s: third_party/sgp4/libsgp4/Observer.cc.s
@@ -463,6 +573,7 @@ third_party/sgp4/libsgp4/Observer.s: third_party/sgp4/libsgp4/Observer.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Observer.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.s
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.s
 
 third_party/sgp4/libsgp4/OrbitalElements.o: third_party/sgp4/libsgp4/OrbitalElements.cc.o
@@ -471,6 +582,7 @@ third_party/sgp4/libsgp4/OrbitalElements.o: third_party/sgp4/libsgp4/OrbitalElem
 # target to build an object file
 third_party/sgp4/libsgp4/OrbitalElements.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.o
 
 third_party/sgp4/libsgp4/OrbitalElements.i: third_party/sgp4/libsgp4/OrbitalElements.cc.i
@@ -479,6 +591,7 @@ third_party/sgp4/libsgp4/OrbitalElements.i: third_party/sgp4/libsgp4/OrbitalElem
 # target to preprocess a source file
 third_party/sgp4/libsgp4/OrbitalElements.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.i
 
 third_party/sgp4/libsgp4/OrbitalElements.s: third_party/sgp4/libsgp4/OrbitalElements.cc.s
@@ -487,6 +600,7 @@ third_party/sgp4/libsgp4/OrbitalElements.s: third_party/sgp4/libsgp4/OrbitalElem
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/OrbitalElements.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.s
 
 third_party/sgp4/libsgp4/SGP4.o: third_party/sgp4/libsgp4/SGP4.cc.o
@@ -495,6 +609,7 @@ third_party/sgp4/libsgp4/SGP4.o: third_party/sgp4/libsgp4/SGP4.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/SGP4.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.o
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.o
 
 third_party/sgp4/libsgp4/SGP4.i: third_party/sgp4/libsgp4/SGP4.cc.i
@@ -503,6 +618,7 @@ third_party/sgp4/libsgp4/SGP4.i: third_party/sgp4/libsgp4/SGP4.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/SGP4.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.i
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.i
 
 third_party/sgp4/libsgp4/SGP4.s: third_party/sgp4/libsgp4/SGP4.cc.s
@@ -511,6 +627,7 @@ third_party/sgp4/libsgp4/SGP4.s: third_party/sgp4/libsgp4/SGP4.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/SGP4.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.s
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.s
 
 third_party/sgp4/libsgp4/SatelliteException.o: third_party/sgp4/libsgp4/SatelliteException.cc.o
@@ -519,6 +636,7 @@ third_party/sgp4/libsgp4/SatelliteException.o: third_party/sgp4/libsgp4/Satellit
 # target to build an object file
 third_party/sgp4/libsgp4/SatelliteException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.o
 
 third_party/sgp4/libsgp4/SatelliteException.i: third_party/sgp4/libsgp4/SatelliteException.cc.i
@@ -527,6 +645,7 @@ third_party/sgp4/libsgp4/SatelliteException.i: third_party/sgp4/libsgp4/Satellit
 # target to preprocess a source file
 third_party/sgp4/libsgp4/SatelliteException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.i
 
 third_party/sgp4/libsgp4/SatelliteException.s: third_party/sgp4/libsgp4/SatelliteException.cc.s
@@ -535,6 +654,7 @@ third_party/sgp4/libsgp4/SatelliteException.s: third_party/sgp4/libsgp4/Satellit
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/SatelliteException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.s
 
 third_party/sgp4/libsgp4/SolarPosition.o: third_party/sgp4/libsgp4/SolarPosition.cc.o
@@ -543,6 +663,7 @@ third_party/sgp4/libsgp4/SolarPosition.o: third_party/sgp4/libsgp4/SolarPosition
 # target to build an object file
 third_party/sgp4/libsgp4/SolarPosition.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.o
 
 third_party/sgp4/libsgp4/SolarPosition.i: third_party/sgp4/libsgp4/SolarPosition.cc.i
@@ -551,6 +672,7 @@ third_party/sgp4/libsgp4/SolarPosition.i: third_party/sgp4/libsgp4/SolarPosition
 # target to preprocess a source file
 third_party/sgp4/libsgp4/SolarPosition.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.i
 
 third_party/sgp4/libsgp4/SolarPosition.s: third_party/sgp4/libsgp4/SolarPosition.cc.s
@@ -559,6 +681,7 @@ third_party/sgp4/libsgp4/SolarPosition.s: third_party/sgp4/libsgp4/SolarPosition
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/SolarPosition.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.s
 
 third_party/sgp4/libsgp4/TimeSpan.o: third_party/sgp4/libsgp4/TimeSpan.cc.o
@@ -567,6 +690,7 @@ third_party/sgp4/libsgp4/TimeSpan.o: third_party/sgp4/libsgp4/TimeSpan.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/TimeSpan.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.o
 
 third_party/sgp4/libsgp4/TimeSpan.i: third_party/sgp4/libsgp4/TimeSpan.cc.i
@@ -575,6 +699,7 @@ third_party/sgp4/libsgp4/TimeSpan.i: third_party/sgp4/libsgp4/TimeSpan.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/TimeSpan.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.i
 
 third_party/sgp4/libsgp4/TimeSpan.s: third_party/sgp4/libsgp4/TimeSpan.cc.s
@@ -583,6 +708,7 @@ third_party/sgp4/libsgp4/TimeSpan.s: third_party/sgp4/libsgp4/TimeSpan.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/TimeSpan.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.s
 
 third_party/sgp4/libsgp4/Tle.o: third_party/sgp4/libsgp4/Tle.cc.o
@@ -591,6 +717,7 @@ third_party/sgp4/libsgp4/Tle.o: third_party/sgp4/libsgp4/Tle.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Tle.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.o
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.o
 
 third_party/sgp4/libsgp4/Tle.i: third_party/sgp4/libsgp4/Tle.cc.i
@@ -599,6 +726,7 @@ third_party/sgp4/libsgp4/Tle.i: third_party/sgp4/libsgp4/Tle.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Tle.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.i
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.i
 
 third_party/sgp4/libsgp4/Tle.s: third_party/sgp4/libsgp4/Tle.cc.s
@@ -607,6 +735,7 @@ third_party/sgp4/libsgp4/Tle.s: third_party/sgp4/libsgp4/Tle.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Tle.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.s
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.s
 
 third_party/sgp4/libsgp4/TleException.o: third_party/sgp4/libsgp4/TleException.cc.o
@@ -615,6 +744,7 @@ third_party/sgp4/libsgp4/TleException.o: third_party/sgp4/libsgp4/TleException.c
 # target to build an object file
 third_party/sgp4/libsgp4/TleException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.o
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.o
 
 third_party/sgp4/libsgp4/TleException.i: third_party/sgp4/libsgp4/TleException.cc.i
@@ -623,6 +753,7 @@ third_party/sgp4/libsgp4/TleException.i: third_party/sgp4/libsgp4/TleException.c
 # target to preprocess a source file
 third_party/sgp4/libsgp4/TleException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.i
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.i
 
 third_party/sgp4/libsgp4/TleException.s: third_party/sgp4/libsgp4/TleException.cc.s
@@ -631,6 +762,7 @@ third_party/sgp4/libsgp4/TleException.s: third_party/sgp4/libsgp4/TleException.c
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/TleException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.s
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.s
 
 third_party/sgp4/libsgp4/Util.o: third_party/sgp4/libsgp4/Util.cc.o
@@ -639,6 +771,7 @@ third_party/sgp4/libsgp4/Util.o: third_party/sgp4/libsgp4/Util.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Util.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.o
 .PHONY : third_party/sgp4/libsgp4/Util.cc.o
 
 third_party/sgp4/libsgp4/Util.i: third_party/sgp4/libsgp4/Util.cc.i
@@ -647,6 +780,7 @@ third_party/sgp4/libsgp4/Util.i: third_party/sgp4/libsgp4/Util.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Util.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.i
 .PHONY : third_party/sgp4/libsgp4/Util.cc.i
 
 third_party/sgp4/libsgp4/Util.s: third_party/sgp4/libsgp4/Util.cc.s
@@ -655,6 +789,7 @@ third_party/sgp4/libsgp4/Util.s: third_party/sgp4/libsgp4/Util.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Util.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.s
 .PHONY : third_party/sgp4/libsgp4/Util.cc.s
 
 third_party/sgp4/libsgp4/Vector.o: third_party/sgp4/libsgp4/Vector.cc.o
@@ -663,6 +798,7 @@ third_party/sgp4/libsgp4/Vector.o: third_party/sgp4/libsgp4/Vector.cc.o
 # target to build an object file
 third_party/sgp4/libsgp4/Vector.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.o
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.o
 
 third_party/sgp4/libsgp4/Vector.i: third_party/sgp4/libsgp4/Vector.cc.i
@@ -671,6 +807,7 @@ third_party/sgp4/libsgp4/Vector.i: third_party/sgp4/libsgp4/Vector.cc.i
 # target to preprocess a source file
 third_party/sgp4/libsgp4/Vector.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.i
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.i
 
 third_party/sgp4/libsgp4/Vector.s: third_party/sgp4/libsgp4/Vector.cc.s
@@ -679,6 +816,7 @@ third_party/sgp4/libsgp4/Vector.s: third_party/sgp4/libsgp4/Vector.cc.s
 # target to generate assembly for a file
 third_party/sgp4/libsgp4/Vector.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.s
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.s
 
 # Help Target
@@ -689,7 +827,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test"
 	@echo "... sat_sim"
+	@echo "... test_orbital"
+	@echo "... test_passpredict"
 	@echo "... EarthMath.o"
 	@echo "... EarthMath.i"
 	@echo "... EarthMath.s"
@@ -711,6 +852,12 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... tests/test_orbital.o"
+	@echo "... tests/test_orbital.i"
+	@echo "... tests/test_orbital.s"
+	@echo "... tests/test_passpredict.o"
+	@echo "... tests/test_passpredict.i"
+	@echo "... tests/test_passpredict.s"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.o"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.i"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.s"
