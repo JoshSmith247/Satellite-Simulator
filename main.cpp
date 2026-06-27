@@ -94,11 +94,15 @@ int main()
     const int FUTURE_POINTS  = 360;
     float     futureInterval = 1.0f;    // minutes between ground-track samples (set on load)
 
-    std::vector<Vector3> trail;
+    std::vector<Vector3> observedPath;               // model-space record of where the satellite
+                                                     // has ACTUALLY been this session (a log, not a
+                                                     // prediction); breaks (NaN) span time jumps
     std::vector<Vector3> futurePath;                 // model-space, for the 3D globe
     std::vector<Vector3> keplerPath;                 // model-space, for the 3D globe
     std::vector<std::array<float, 2>> futureGeo;     // raw {lat,lon} for the 2D map
-    float  subLat = 0.0f, subLon = 0.0f;             // current sub-point for the 2D map
+    float  subLat = 0.0f, subLon = 0.0f, subAlt = 0.0f;  // current sub-point (subAlt in scene units)
+    double lastRecordSim = -1e18;                    // sim-time of last recorded point (Unix s)
+    bool   recordBreak = false;                      // start a new track segment after a time jump
     bool   forcePassRecompute = false;
 
     std::string target_ID = "25544";    // ISS (Zarya) — default
@@ -207,9 +211,8 @@ int main()
     rebuildTargets(GetRenderWidth(), GetRenderHeight());
 
     // ── Orbit data ─────────────────────────────────────────────────────────────
-    const int   TRAIL_LENGTH    = 200;
     const float FUTURE_UPDATE_S = 5.0f;
-    trail.reserve(TRAIL_LENGTH);
+    observedPath.reserve(4096);
     futurePath.reserve(FUTURE_POINTS);
     keplerPath.reserve(FUTURE_POINTS);
     futureGeo.reserve(FUTURE_POINTS);
@@ -321,7 +324,8 @@ int main()
             if (res.ok) {
                 tle = res.tle; sgp4 = res.sgp4; tleFromCache = res.fromCache; target_ID = res.id;
                 futureInterval = (float)(1440.0 / tle->MeanMotion()) / FUTURE_POINTS;
-                trail.clear(); futurePath.clear(); keplerPath.clear(); futureGeo.clear();
+                observedPath.clear(); lastRecordSim = -1e18;
+                futurePath.clear(); keplerPath.clear(); futureGeo.clear();
                 futureTimer = FUTURE_UPDATE_S;
                 forcePassRecompute = true;
             }
@@ -360,7 +364,7 @@ int main()
             if (IsKeyPressed(KEY_SPACE)) clock.togglePause();
             if (IsKeyPressed(KEY_RIGHT_BRACKET)) clock.setSpeed(fminf(clock.speed() * 2.0, 100000.0));
             if (IsKeyPressed(KEY_LEFT_BRACKET))  clock.setSpeed(fmaxf(clock.speed() * 0.5, 0.25));
-            if (IsKeyPressed(KEY_R)) { clock.resetToNow(); forcePassRecompute = true; }
+            if (IsKeyPressed(KEY_R)) { clock.resetToNow(); forcePassRecompute = true; recordBreak = true; }
             if (IsKeyPressed(KEY_T)) {
                 selectedStation = (selectedStation + 1) % (int)stations.size();
                 forcePassRecompute = true;
@@ -373,6 +377,7 @@ int main()
                         clock.setUnixSeconds(aosU - 10.0);
                         clock.setSpeed(1.0);
                         forcePassRecompute = true;
+                        recordBreak = true;   // don't connect the log across the jump
                         break;
                     }
                 }
@@ -410,21 +415,33 @@ int main()
         for (size_t i = 0; i < stations.size(); i++)
             stationPositions[i] = geoToWorld(stations[i].lat, stations[i].lon, 0.0f);
 
-        Vector3 satPos = trail.empty() ? Vector3Zero() : trail.back();
+        Vector3 satPos = Vector3Zero();
         PassPredict::LookAngle look;
         double dopplerHz = 0.0;
 
         if (sgp4) {
             try {
                 auto sub = FetchTLE::getSubPoint(*sgp4, simDt);
-                subLat = sub[0]; subLon = sub[1];
-                satPos = geoToWorld(sub[0], sub[1], sub[2] * KM_TO_SCENE);
+                subLat = sub[0]; subLon = sub[1]; subAlt = sub[2] * KM_TO_SCENE;
+                satPos = geoToWorld(sub[0], sub[1], subAlt);
             } catch (const std::exception& e) {
                 TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
             }
 
-            if ((int)trail.size() >= TRAIL_LENGTH) trail.erase(trail.begin());
-            trail.push_back(satPos);
+            // Record where the satellite has ACTUALLY been this session. We log the
+            // current sub-point whenever the simulation has advanced past a sampling
+            // interval — so it's a real trace of what we've watched, at any time speed,
+            // not a backward TLE extrapolation. A time jump (R/N) starts a new segment.
+            const double RECORD_INTERVAL = 3.0;   // sim seconds between samples
+            double simU = clock.unixSeconds();
+            if (lastRecordSim <= -1e17 || std::fabs(simU - lastRecordSim) >= RECORD_INTERVAL) {
+                if (recordBreak && !observedPath.empty())
+                    observedPath.push_back({NAN, NAN, NAN});   // break: don't connect across the jump
+                recordBreak = false;
+                observedPath.push_back(geoToModel(subLat, subLon, subAlt));
+                lastRecordSim = simU;
+                if ((int)observedPath.size() > 10000) observedPath.erase(observedPath.begin());
+            }
 
             futureTimer += GetFrameTime();
             if (futureTimer >= FUTURE_UPDATE_S) {
@@ -484,16 +501,20 @@ int main()
 
         DrawModel(earthModel, Vector3Zero(), EARTH_RADIUS, WHITE);
 
-        // Past trail — billboard quads, alpha-tapered, additive for glow
-        int trailCount = (int)trail.size();
+        // Observed path — the actual session record of where the satellite has been,
+        // billboard quads, brightest near the satellite and fading into the past.
+        // Co-rotates with the globe (model space); NaN entries break the line at jumps.
+        int pastCount = (int)observedPath.size();
         rlDisableBackfaceCulling();
         BeginBlendMode(BLEND_ADDITIVE);
         rlBegin(RL_QUADS);
-        for (int i = 1; i < trailCount; i++) {
-            float t     = (float)i / (float)trailCount;
+        for (int i = 1; i < pastCount; i++) {
+            if (std::isnan(observedPath[i].x) || std::isnan(observedPath[i - 1].x)) continue;
+            float t     = (float)i / (float)pastCount;   // 0 = oldest, 1 = most recent
             float alpha = t * 200.0f;
-            float width = 0.025f + 0.035f * t;
-            Vector3 p0 = trail[i - 1], p1 = trail[i];
+            float width = 0.018f + 0.020f * t;
+            Vector3 p0 = Vector3Transform(observedPath[i - 1], earthModel.transform);
+            Vector3 p1 = Vector3Transform(observedPath[i],     earthModel.transform);
             Vector3 seg = Vector3Normalize(Vector3Subtract(p1, p0));
             Vector3 mid = Vector3Scale(Vector3Add(p0, p1), 0.5f);
             Vector3 cam = Vector3Normalize(Vector3Subtract(camera.position, mid));
