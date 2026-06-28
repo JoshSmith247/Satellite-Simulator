@@ -60,7 +60,14 @@ the Doppler shift on the radio link.
 ## Building
 
 Requirements: a C++17 compiler, **CMake ≥ 3.10**, **raylib**, and **libcurl**.
-SGP4 and raygui are vendored under `third_party/`.
+raygui is vendored under `third_party/`; SGP4 (libsgp4) is a git submodule, so
+clone with submodules (or initialise them after cloning):
+
+```sh
+git clone --recurse-submodules <repo-url>
+# or, if already cloned:
+git submodule update --init --recursive
+```
 
 ```sh
 # macOS (Homebrew)
