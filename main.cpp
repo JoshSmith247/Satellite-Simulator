@@ -259,14 +259,6 @@ int main()
     bool    hohValid = false;
     Vector3 hohBurn1W{}, hohBurn2W{};       // burn-point world positions (for 2D labels)
 
-    bool autoExport = false;
-    // Verification aid: SATSIM_OPEN=map,edit,export opens panels / exports at startup.
-    if (const char* o = getenv("SATSIM_OPEN")) {
-        if (std::strstr(o, "map"))     showMap     = true;
-        if (std::strstr(o, "edit"))    showEditor  = true;
-        if (std::strstr(o, "export"))  autoExport  = true;
-        if (std::strstr(o, "hohmann")) showHohmann = true;
-    }
 
     // Station/link editor field buffers + which one is being edited.
     char nameBuf[32] = {0}, latBuf[16] = {0}, lonBuf[16] = {0},
@@ -315,17 +307,18 @@ int main()
         exportStatus = "Exported " + std::to_string(passes.size()) + " passes -> " + fn;
     };
 
-    // Optional automated capture for verification: SATSIM_AUTOSHOT=N writes
-    // satsim_verify.png after N rendered frames and exits. No effect when unset.
-    int autoShotFrame = -1;
-    if (const char* s = getenv("SATSIM_AUTOSHOT")) autoShotFrame = atoi(s);
-    int frameCount = 0;
-
     // ─────────────────────────────────────────────────────────────────────────
     while (!WindowShouldClose())
     {
         if (IsWindowResized())
             rebuildTargets(GetRenderWidth(), GetRenderHeight());
+
+        // The 2D UI is authored in logical-screen coords and drawn scaled up to the
+        // (HiDPI) framebuffer, but GetMousePosition() reports framebuffer-space pixels.
+        // Scale the mouse back into logical space so raygui hit-tests line up with the
+        // controls the user actually sees (otherwise clicks miss every button).
+        SetMouseScale((float)GetScreenWidth() / GetRenderWidth(),
+                      (float)GetScreenHeight() / GetRenderHeight());
 
         // ── Async load: swap in the satellite once the worker thread finishes ──
         if (loadFuture.valid() &&
@@ -1005,14 +998,6 @@ int main()
 
         rlPopMatrix();
         EndDrawing();
-
-        if (autoExport && !passes.empty()) { exportPasses(); autoExport = false; }
-
-        if (autoShotFrame >= 0 && ++frameCount >= autoShotFrame) {
-            TakeScreenshot("satsim_verify.png");
-            TraceLog(LOG_INFO, "AUTOSHOT: wrote satsim_verify.png after %d frames", frameCount);
-            break;
-        }
     }
 
     if (loadFuture.valid()) loadFuture.wait();   // don't tear down while a load is in flight

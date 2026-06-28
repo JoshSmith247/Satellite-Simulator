@@ -165,12 +165,52 @@ test_passpredict/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/build
 .PHONY : test_passpredict/fast
 
+#=============================================================================
+# Target rules for targets named test_simclock
+
+# Build rule for target.
+test_simclock: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_simclock
+.PHONY : test_simclock
+
+# fast build rule for target.
+test_simclock/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/build
+.PHONY : test_simclock/fast
+
+#=============================================================================
+# Target rules for targets named test_earthmath
+
+# Build rule for target.
+test_earthmath: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_earthmath
+.PHONY : test_earthmath
+
+# fast build rule for target.
+test_earthmath/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/build
+.PHONY : test_earthmath/fast
+
+#=============================================================================
+# Target rules for targets named test_fetchtle
+
+# Build rule for target.
+test_fetchtle: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_fetchtle
+.PHONY : test_fetchtle
+
+# fast build rule for target.
+test_fetchtle/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/build
+.PHONY : test_fetchtle/fast
+
 EarthMath.o: EarthMath.cpp.o
 .PHONY : EarthMath.o
 
 # target to build an object file
 EarthMath.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/EarthMath.cpp.o
 .PHONY : EarthMath.cpp.o
 
 EarthMath.i: EarthMath.cpp.i
@@ -179,6 +219,7 @@ EarthMath.i: EarthMath.cpp.i
 # target to preprocess a source file
 EarthMath.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/EarthMath.cpp.i
 .PHONY : EarthMath.cpp.i
 
 EarthMath.s: EarthMath.cpp.s
@@ -187,6 +228,7 @@ EarthMath.s: EarthMath.cpp.s
 # target to generate assembly for a file
 EarthMath.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/EarthMath.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/EarthMath.cpp.s
 .PHONY : EarthMath.cpp.s
 
 OrbitalMechanics.o: OrbitalMechanics.cpp.o
@@ -249,6 +291,7 @@ SimClock.o: SimClock.cpp.o
 # target to build an object file
 SimClock.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/SimClock.cpp.o
 .PHONY : SimClock.cpp.o
 
 SimClock.i: SimClock.cpp.i
@@ -257,6 +300,7 @@ SimClock.i: SimClock.cpp.i
 # target to preprocess a source file
 SimClock.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/SimClock.cpp.i
 .PHONY : SimClock.cpp.i
 
 SimClock.s: SimClock.cpp.s
@@ -265,6 +309,7 @@ SimClock.s: SimClock.cpp.s
 # target to generate assembly for a file
 SimClock.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/SimClock.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/SimClock.cpp.s
 .PHONY : SimClock.cpp.s
 
 SunMath.o: SunMath.cpp.o
@@ -297,6 +342,7 @@ fetchTLE.o: fetchTLE.cpp.o
 # target to build an object file
 fetchTLE.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/fetchTLE.cpp.o
 .PHONY : fetchTLE.cpp.o
 
 fetchTLE.i: fetchTLE.cpp.i
@@ -305,6 +351,7 @@ fetchTLE.i: fetchTLE.cpp.i
 # target to preprocess a source file
 fetchTLE.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/fetchTLE.cpp.i
 .PHONY : fetchTLE.cpp.i
 
 fetchTLE.s: fetchTLE.cpp.s
@@ -313,6 +360,7 @@ fetchTLE.s: fetchTLE.cpp.s
 # target to generate assembly for a file
 fetchTLE.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/fetchTLE.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/fetchTLE.cpp.s
 .PHONY : fetchTLE.cpp.s
 
 main.o: main.cpp.o
@@ -338,6 +386,54 @@ main.s: main.cpp.s
 main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/main.cpp.s
 .PHONY : main.cpp.s
+
+tests/test_earthmath.o: tests/test_earthmath.cpp.o
+.PHONY : tests/test_earthmath.o
+
+# target to build an object file
+tests/test_earthmath.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/tests/test_earthmath.cpp.o
+.PHONY : tests/test_earthmath.cpp.o
+
+tests/test_earthmath.i: tests/test_earthmath.cpp.i
+.PHONY : tests/test_earthmath.i
+
+# target to preprocess a source file
+tests/test_earthmath.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/tests/test_earthmath.cpp.i
+.PHONY : tests/test_earthmath.cpp.i
+
+tests/test_earthmath.s: tests/test_earthmath.cpp.s
+.PHONY : tests/test_earthmath.s
+
+# target to generate assembly for a file
+tests/test_earthmath.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_earthmath.dir/build.make CMakeFiles/test_earthmath.dir/tests/test_earthmath.cpp.s
+.PHONY : tests/test_earthmath.cpp.s
+
+tests/test_fetchtle.o: tests/test_fetchtle.cpp.o
+.PHONY : tests/test_fetchtle.o
+
+# target to build an object file
+tests/test_fetchtle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/tests/test_fetchtle.cpp.o
+.PHONY : tests/test_fetchtle.cpp.o
+
+tests/test_fetchtle.i: tests/test_fetchtle.cpp.i
+.PHONY : tests/test_fetchtle.i
+
+# target to preprocess a source file
+tests/test_fetchtle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/tests/test_fetchtle.cpp.i
+.PHONY : tests/test_fetchtle.cpp.i
+
+tests/test_fetchtle.s: tests/test_fetchtle.cpp.s
+.PHONY : tests/test_fetchtle.s
+
+# target to generate assembly for a file
+tests/test_fetchtle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/tests/test_fetchtle.cpp.s
+.PHONY : tests/test_fetchtle.cpp.s
 
 tests/test_orbital.o: tests/test_orbital.cpp.o
 .PHONY : tests/test_orbital.o
@@ -387,6 +483,30 @@ tests/test_passpredict.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/tests/test_passpredict.cpp.s
 .PHONY : tests/test_passpredict.cpp.s
 
+tests/test_simclock.o: tests/test_simclock.cpp.o
+.PHONY : tests/test_simclock.o
+
+# target to build an object file
+tests/test_simclock.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/tests/test_simclock.cpp.o
+.PHONY : tests/test_simclock.cpp.o
+
+tests/test_simclock.i: tests/test_simclock.cpp.i
+.PHONY : tests/test_simclock.i
+
+# target to preprocess a source file
+tests/test_simclock.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/tests/test_simclock.cpp.i
+.PHONY : tests/test_simclock.cpp.i
+
+tests/test_simclock.s: tests/test_simclock.cpp.s
+.PHONY : tests/test_simclock.s
+
+# target to generate assembly for a file
+tests/test_simclock.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/tests/test_simclock.cpp.s
+.PHONY : tests/test_simclock.cpp.s
+
 third_party/sgp4/libsgp4/CoordGeodetic.o: third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.o
 
@@ -394,6 +514,8 @@ third_party/sgp4/libsgp4/CoordGeodetic.o: third_party/sgp4/libsgp4/CoordGeodetic
 third_party/sgp4/libsgp4/CoordGeodetic.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.o
 
 third_party/sgp4/libsgp4/CoordGeodetic.i: third_party/sgp4/libsgp4/CoordGeodetic.cc.i
@@ -403,6 +525,8 @@ third_party/sgp4/libsgp4/CoordGeodetic.i: third_party/sgp4/libsgp4/CoordGeodetic
 third_party/sgp4/libsgp4/CoordGeodetic.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.i
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.i
 
 third_party/sgp4/libsgp4/CoordGeodetic.s: third_party/sgp4/libsgp4/CoordGeodetic.cc.s
@@ -412,6 +536,8 @@ third_party/sgp4/libsgp4/CoordGeodetic.s: third_party/sgp4/libsgp4/CoordGeodetic
 third_party/sgp4/libsgp4/CoordGeodetic.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordGeodetic.cc.s
 .PHONY : third_party/sgp4/libsgp4/CoordGeodetic.cc.s
 
 third_party/sgp4/libsgp4/CoordTopocentric.o: third_party/sgp4/libsgp4/CoordTopocentric.cc.o
@@ -421,6 +547,8 @@ third_party/sgp4/libsgp4/CoordTopocentric.o: third_party/sgp4/libsgp4/CoordTopoc
 third_party/sgp4/libsgp4/CoordTopocentric.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.o
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.o
 
 third_party/sgp4/libsgp4/CoordTopocentric.i: third_party/sgp4/libsgp4/CoordTopocentric.cc.i
@@ -430,6 +558,8 @@ third_party/sgp4/libsgp4/CoordTopocentric.i: third_party/sgp4/libsgp4/CoordTopoc
 third_party/sgp4/libsgp4/CoordTopocentric.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.i
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.i
 
 third_party/sgp4/libsgp4/CoordTopocentric.s: third_party/sgp4/libsgp4/CoordTopocentric.cc.s
@@ -439,6 +569,8 @@ third_party/sgp4/libsgp4/CoordTopocentric.s: third_party/sgp4/libsgp4/CoordTopoc
 third_party/sgp4/libsgp4/CoordTopocentric.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/CoordTopocentric.cc.s
 .PHONY : third_party/sgp4/libsgp4/CoordTopocentric.cc.s
 
 third_party/sgp4/libsgp4/DateTime.o: third_party/sgp4/libsgp4/DateTime.cc.o
@@ -448,6 +580,8 @@ third_party/sgp4/libsgp4/DateTime.o: third_party/sgp4/libsgp4/DateTime.cc.o
 third_party/sgp4/libsgp4/DateTime.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DateTime.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DateTime.cc.o
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.o
 
 third_party/sgp4/libsgp4/DateTime.i: third_party/sgp4/libsgp4/DateTime.cc.i
@@ -457,6 +591,8 @@ third_party/sgp4/libsgp4/DateTime.i: third_party/sgp4/libsgp4/DateTime.cc.i
 third_party/sgp4/libsgp4/DateTime.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DateTime.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DateTime.cc.i
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.i
 
 third_party/sgp4/libsgp4/DateTime.s: third_party/sgp4/libsgp4/DateTime.cc.s
@@ -466,6 +602,8 @@ third_party/sgp4/libsgp4/DateTime.s: third_party/sgp4/libsgp4/DateTime.cc.s
 third_party/sgp4/libsgp4/DateTime.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DateTime.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DateTime.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DateTime.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DateTime.cc.s
 .PHONY : third_party/sgp4/libsgp4/DateTime.cc.s
 
 third_party/sgp4/libsgp4/DecayedException.o: third_party/sgp4/libsgp4/DecayedException.cc.o
@@ -475,6 +613,8 @@ third_party/sgp4/libsgp4/DecayedException.o: third_party/sgp4/libsgp4/DecayedExc
 third_party/sgp4/libsgp4/DecayedException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DecayedException.cc.o
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.o
 
 third_party/sgp4/libsgp4/DecayedException.i: third_party/sgp4/libsgp4/DecayedException.cc.i
@@ -484,6 +624,8 @@ third_party/sgp4/libsgp4/DecayedException.i: third_party/sgp4/libsgp4/DecayedExc
 third_party/sgp4/libsgp4/DecayedException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DecayedException.cc.i
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.i
 
 third_party/sgp4/libsgp4/DecayedException.s: third_party/sgp4/libsgp4/DecayedException.cc.s
@@ -493,6 +635,8 @@ third_party/sgp4/libsgp4/DecayedException.s: third_party/sgp4/libsgp4/DecayedExc
 third_party/sgp4/libsgp4/DecayedException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/DecayedException.cc.s
 .PHONY : third_party/sgp4/libsgp4/DecayedException.cc.s
 
 third_party/sgp4/libsgp4/Eci.o: third_party/sgp4/libsgp4/Eci.cc.o
@@ -502,6 +646,8 @@ third_party/sgp4/libsgp4/Eci.o: third_party/sgp4/libsgp4/Eci.cc.o
 third_party/sgp4/libsgp4/Eci.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Eci.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Eci.cc.o
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.o
 
 third_party/sgp4/libsgp4/Eci.i: third_party/sgp4/libsgp4/Eci.cc.i
@@ -511,6 +657,8 @@ third_party/sgp4/libsgp4/Eci.i: third_party/sgp4/libsgp4/Eci.cc.i
 third_party/sgp4/libsgp4/Eci.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Eci.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Eci.cc.i
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.i
 
 third_party/sgp4/libsgp4/Eci.s: third_party/sgp4/libsgp4/Eci.cc.s
@@ -520,6 +668,8 @@ third_party/sgp4/libsgp4/Eci.s: third_party/sgp4/libsgp4/Eci.cc.s
 third_party/sgp4/libsgp4/Eci.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Eci.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Eci.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Eci.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Eci.cc.s
 .PHONY : third_party/sgp4/libsgp4/Eci.cc.s
 
 third_party/sgp4/libsgp4/Globals.o: third_party/sgp4/libsgp4/Globals.cc.o
@@ -529,6 +679,8 @@ third_party/sgp4/libsgp4/Globals.o: third_party/sgp4/libsgp4/Globals.cc.o
 third_party/sgp4/libsgp4/Globals.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Globals.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Globals.cc.o
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.o
 
 third_party/sgp4/libsgp4/Globals.i: third_party/sgp4/libsgp4/Globals.cc.i
@@ -538,6 +690,8 @@ third_party/sgp4/libsgp4/Globals.i: third_party/sgp4/libsgp4/Globals.cc.i
 third_party/sgp4/libsgp4/Globals.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Globals.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Globals.cc.i
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.i
 
 third_party/sgp4/libsgp4/Globals.s: third_party/sgp4/libsgp4/Globals.cc.s
@@ -547,6 +701,8 @@ third_party/sgp4/libsgp4/Globals.s: third_party/sgp4/libsgp4/Globals.cc.s
 third_party/sgp4/libsgp4/Globals.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Globals.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Globals.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Globals.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Globals.cc.s
 .PHONY : third_party/sgp4/libsgp4/Globals.cc.s
 
 third_party/sgp4/libsgp4/Observer.o: third_party/sgp4/libsgp4/Observer.cc.o
@@ -556,6 +712,8 @@ third_party/sgp4/libsgp4/Observer.o: third_party/sgp4/libsgp4/Observer.cc.o
 third_party/sgp4/libsgp4/Observer.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Observer.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Observer.cc.o
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.o
 
 third_party/sgp4/libsgp4/Observer.i: third_party/sgp4/libsgp4/Observer.cc.i
@@ -565,6 +723,8 @@ third_party/sgp4/libsgp4/Observer.i: third_party/sgp4/libsgp4/Observer.cc.i
 third_party/sgp4/libsgp4/Observer.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Observer.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Observer.cc.i
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.i
 
 third_party/sgp4/libsgp4/Observer.s: third_party/sgp4/libsgp4/Observer.cc.s
@@ -574,6 +734,8 @@ third_party/sgp4/libsgp4/Observer.s: third_party/sgp4/libsgp4/Observer.cc.s
 third_party/sgp4/libsgp4/Observer.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Observer.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Observer.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Observer.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Observer.cc.s
 .PHONY : third_party/sgp4/libsgp4/Observer.cc.s
 
 third_party/sgp4/libsgp4/OrbitalElements.o: third_party/sgp4/libsgp4/OrbitalElements.cc.o
@@ -583,6 +745,8 @@ third_party/sgp4/libsgp4/OrbitalElements.o: third_party/sgp4/libsgp4/OrbitalElem
 third_party/sgp4/libsgp4/OrbitalElements.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.o
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.o
 
 third_party/sgp4/libsgp4/OrbitalElements.i: third_party/sgp4/libsgp4/OrbitalElements.cc.i
@@ -592,6 +756,8 @@ third_party/sgp4/libsgp4/OrbitalElements.i: third_party/sgp4/libsgp4/OrbitalElem
 third_party/sgp4/libsgp4/OrbitalElements.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.i
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.i
 
 third_party/sgp4/libsgp4/OrbitalElements.s: third_party/sgp4/libsgp4/OrbitalElements.cc.s
@@ -601,6 +767,8 @@ third_party/sgp4/libsgp4/OrbitalElements.s: third_party/sgp4/libsgp4/OrbitalElem
 third_party/sgp4/libsgp4/OrbitalElements.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/OrbitalElements.cc.s
 .PHONY : third_party/sgp4/libsgp4/OrbitalElements.cc.s
 
 third_party/sgp4/libsgp4/SGP4.o: third_party/sgp4/libsgp4/SGP4.cc.o
@@ -610,6 +778,8 @@ third_party/sgp4/libsgp4/SGP4.o: third_party/sgp4/libsgp4/SGP4.cc.o
 third_party/sgp4/libsgp4/SGP4.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SGP4.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SGP4.cc.o
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.o
 
 third_party/sgp4/libsgp4/SGP4.i: third_party/sgp4/libsgp4/SGP4.cc.i
@@ -619,6 +789,8 @@ third_party/sgp4/libsgp4/SGP4.i: third_party/sgp4/libsgp4/SGP4.cc.i
 third_party/sgp4/libsgp4/SGP4.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SGP4.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SGP4.cc.i
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.i
 
 third_party/sgp4/libsgp4/SGP4.s: third_party/sgp4/libsgp4/SGP4.cc.s
@@ -628,6 +800,8 @@ third_party/sgp4/libsgp4/SGP4.s: third_party/sgp4/libsgp4/SGP4.cc.s
 third_party/sgp4/libsgp4/SGP4.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SGP4.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SGP4.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SGP4.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SGP4.cc.s
 .PHONY : third_party/sgp4/libsgp4/SGP4.cc.s
 
 third_party/sgp4/libsgp4/SatelliteException.o: third_party/sgp4/libsgp4/SatelliteException.cc.o
@@ -637,6 +811,8 @@ third_party/sgp4/libsgp4/SatelliteException.o: third_party/sgp4/libsgp4/Satellit
 third_party/sgp4/libsgp4/SatelliteException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SatelliteException.cc.o
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.o
 
 third_party/sgp4/libsgp4/SatelliteException.i: third_party/sgp4/libsgp4/SatelliteException.cc.i
@@ -646,6 +822,8 @@ third_party/sgp4/libsgp4/SatelliteException.i: third_party/sgp4/libsgp4/Satellit
 third_party/sgp4/libsgp4/SatelliteException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SatelliteException.cc.i
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.i
 
 third_party/sgp4/libsgp4/SatelliteException.s: third_party/sgp4/libsgp4/SatelliteException.cc.s
@@ -655,6 +833,8 @@ third_party/sgp4/libsgp4/SatelliteException.s: third_party/sgp4/libsgp4/Satellit
 third_party/sgp4/libsgp4/SatelliteException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SatelliteException.cc.s
 .PHONY : third_party/sgp4/libsgp4/SatelliteException.cc.s
 
 third_party/sgp4/libsgp4/SolarPosition.o: third_party/sgp4/libsgp4/SolarPosition.cc.o
@@ -664,6 +844,8 @@ third_party/sgp4/libsgp4/SolarPosition.o: third_party/sgp4/libsgp4/SolarPosition
 third_party/sgp4/libsgp4/SolarPosition.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SolarPosition.cc.o
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.o
 
 third_party/sgp4/libsgp4/SolarPosition.i: third_party/sgp4/libsgp4/SolarPosition.cc.i
@@ -673,6 +855,8 @@ third_party/sgp4/libsgp4/SolarPosition.i: third_party/sgp4/libsgp4/SolarPosition
 third_party/sgp4/libsgp4/SolarPosition.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SolarPosition.cc.i
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.i
 
 third_party/sgp4/libsgp4/SolarPosition.s: third_party/sgp4/libsgp4/SolarPosition.cc.s
@@ -682,6 +866,8 @@ third_party/sgp4/libsgp4/SolarPosition.s: third_party/sgp4/libsgp4/SolarPosition
 third_party/sgp4/libsgp4/SolarPosition.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/SolarPosition.cc.s
 .PHONY : third_party/sgp4/libsgp4/SolarPosition.cc.s
 
 third_party/sgp4/libsgp4/TimeSpan.o: third_party/sgp4/libsgp4/TimeSpan.cc.o
@@ -691,6 +877,8 @@ third_party/sgp4/libsgp4/TimeSpan.o: third_party/sgp4/libsgp4/TimeSpan.cc.o
 third_party/sgp4/libsgp4/TimeSpan.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TimeSpan.cc.o
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.o
 
 third_party/sgp4/libsgp4/TimeSpan.i: third_party/sgp4/libsgp4/TimeSpan.cc.i
@@ -700,6 +888,8 @@ third_party/sgp4/libsgp4/TimeSpan.i: third_party/sgp4/libsgp4/TimeSpan.cc.i
 third_party/sgp4/libsgp4/TimeSpan.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TimeSpan.cc.i
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.i
 
 third_party/sgp4/libsgp4/TimeSpan.s: third_party/sgp4/libsgp4/TimeSpan.cc.s
@@ -709,6 +899,8 @@ third_party/sgp4/libsgp4/TimeSpan.s: third_party/sgp4/libsgp4/TimeSpan.cc.s
 third_party/sgp4/libsgp4/TimeSpan.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TimeSpan.cc.s
 .PHONY : third_party/sgp4/libsgp4/TimeSpan.cc.s
 
 third_party/sgp4/libsgp4/Tle.o: third_party/sgp4/libsgp4/Tle.cc.o
@@ -718,6 +910,8 @@ third_party/sgp4/libsgp4/Tle.o: third_party/sgp4/libsgp4/Tle.cc.o
 third_party/sgp4/libsgp4/Tle.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Tle.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Tle.cc.o
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.o
 
 third_party/sgp4/libsgp4/Tle.i: third_party/sgp4/libsgp4/Tle.cc.i
@@ -727,6 +921,8 @@ third_party/sgp4/libsgp4/Tle.i: third_party/sgp4/libsgp4/Tle.cc.i
 third_party/sgp4/libsgp4/Tle.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Tle.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Tle.cc.i
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.i
 
 third_party/sgp4/libsgp4/Tle.s: third_party/sgp4/libsgp4/Tle.cc.s
@@ -736,6 +932,8 @@ third_party/sgp4/libsgp4/Tle.s: third_party/sgp4/libsgp4/Tle.cc.s
 third_party/sgp4/libsgp4/Tle.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Tle.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Tle.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Tle.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Tle.cc.s
 .PHONY : third_party/sgp4/libsgp4/Tle.cc.s
 
 third_party/sgp4/libsgp4/TleException.o: third_party/sgp4/libsgp4/TleException.cc.o
@@ -745,6 +943,8 @@ third_party/sgp4/libsgp4/TleException.o: third_party/sgp4/libsgp4/TleException.c
 third_party/sgp4/libsgp4/TleException.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TleException.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TleException.cc.o
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.o
 
 third_party/sgp4/libsgp4/TleException.i: third_party/sgp4/libsgp4/TleException.cc.i
@@ -754,6 +954,8 @@ third_party/sgp4/libsgp4/TleException.i: third_party/sgp4/libsgp4/TleException.c
 third_party/sgp4/libsgp4/TleException.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TleException.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TleException.cc.i
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.i
 
 third_party/sgp4/libsgp4/TleException.s: third_party/sgp4/libsgp4/TleException.cc.s
@@ -763,6 +965,8 @@ third_party/sgp4/libsgp4/TleException.s: third_party/sgp4/libsgp4/TleException.c
 third_party/sgp4/libsgp4/TleException.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/TleException.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/TleException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/TleException.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/TleException.cc.s
 .PHONY : third_party/sgp4/libsgp4/TleException.cc.s
 
 third_party/sgp4/libsgp4/Util.o: third_party/sgp4/libsgp4/Util.cc.o
@@ -772,6 +976,8 @@ third_party/sgp4/libsgp4/Util.o: third_party/sgp4/libsgp4/Util.cc.o
 third_party/sgp4/libsgp4/Util.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Util.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Util.cc.o
 .PHONY : third_party/sgp4/libsgp4/Util.cc.o
 
 third_party/sgp4/libsgp4/Util.i: third_party/sgp4/libsgp4/Util.cc.i
@@ -781,6 +987,8 @@ third_party/sgp4/libsgp4/Util.i: third_party/sgp4/libsgp4/Util.cc.i
 third_party/sgp4/libsgp4/Util.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Util.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Util.cc.i
 .PHONY : third_party/sgp4/libsgp4/Util.cc.i
 
 third_party/sgp4/libsgp4/Util.s: third_party/sgp4/libsgp4/Util.cc.s
@@ -790,6 +998,8 @@ third_party/sgp4/libsgp4/Util.s: third_party/sgp4/libsgp4/Util.cc.s
 third_party/sgp4/libsgp4/Util.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Util.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Util.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Util.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Util.cc.s
 .PHONY : third_party/sgp4/libsgp4/Util.cc.s
 
 third_party/sgp4/libsgp4/Vector.o: third_party/sgp4/libsgp4/Vector.cc.o
@@ -799,6 +1009,8 @@ third_party/sgp4/libsgp4/Vector.o: third_party/sgp4/libsgp4/Vector.cc.o
 third_party/sgp4/libsgp4/Vector.cc.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Vector.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Vector.cc.o
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.o
 
 third_party/sgp4/libsgp4/Vector.i: third_party/sgp4/libsgp4/Vector.cc.i
@@ -808,6 +1020,8 @@ third_party/sgp4/libsgp4/Vector.i: third_party/sgp4/libsgp4/Vector.cc.i
 third_party/sgp4/libsgp4/Vector.cc.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Vector.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Vector.cc.i
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.i
 
 third_party/sgp4/libsgp4/Vector.s: third_party/sgp4/libsgp4/Vector.cc.s
@@ -817,6 +1031,8 @@ third_party/sgp4/libsgp4/Vector.s: third_party/sgp4/libsgp4/Vector.cc.s
 third_party/sgp4/libsgp4/Vector.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sat_sim.dir/build.make CMakeFiles/sat_sim.dir/third_party/sgp4/libsgp4/Vector.cc.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_passpredict.dir/build.make CMakeFiles/test_passpredict.dir/third_party/sgp4/libsgp4/Vector.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simclock.dir/build.make CMakeFiles/test_simclock.dir/third_party/sgp4/libsgp4/Vector.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_fetchtle.dir/build.make CMakeFiles/test_fetchtle.dir/third_party/sgp4/libsgp4/Vector.cc.s
 .PHONY : third_party/sgp4/libsgp4/Vector.cc.s
 
 # Help Target
@@ -829,8 +1045,11 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... sat_sim"
+	@echo "... test_earthmath"
+	@echo "... test_fetchtle"
 	@echo "... test_orbital"
 	@echo "... test_passpredict"
+	@echo "... test_simclock"
 	@echo "... EarthMath.o"
 	@echo "... EarthMath.i"
 	@echo "... EarthMath.s"
@@ -852,12 +1071,21 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... tests/test_earthmath.o"
+	@echo "... tests/test_earthmath.i"
+	@echo "... tests/test_earthmath.s"
+	@echo "... tests/test_fetchtle.o"
+	@echo "... tests/test_fetchtle.i"
+	@echo "... tests/test_fetchtle.s"
 	@echo "... tests/test_orbital.o"
 	@echo "... tests/test_orbital.i"
 	@echo "... tests/test_orbital.s"
 	@echo "... tests/test_passpredict.o"
 	@echo "... tests/test_passpredict.i"
 	@echo "... tests/test_passpredict.s"
+	@echo "... tests/test_simclock.o"
+	@echo "... tests/test_simclock.i"
+	@echo "... tests/test_simclock.s"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.o"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.i"
 	@echo "... third_party/sgp4/libsgp4/CoordGeodetic.s"

@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: Unit tests (headless)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libcurl4-openssl-dev
+
+      # BUILD_APP=OFF skips the GUI app (raylib), building only the headless unit
+      # tests — these need neither raylib nor a display, so CI is fast and reliable.
+      - name: Configure
+        run: cmake -S . -B build -DBUILD_APP=OFF
+
+      - name: Build tests
+        run: cmake --build build -j
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure

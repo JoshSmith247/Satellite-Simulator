@@ -4,3 +4,4 @@
 /.cache
 /tle_cache/
 /exports/
+/third_party/sgp4/libsgp4/*

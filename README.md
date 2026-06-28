@@ -7,7 +7,7 @@ and computes everything a ground station needs to plan and work a contact:
 acquisition/loss times, antenna pointing (azimuth/elevation), slant range, and
 the Doppler shift on the radio link.
 
-![ISS over a ground station](docs/screenshot.png) <!-- add a screenshot here -->
+![Satellite Simulator — pass schedule, telemetry, and 3D ground track](docs/screenshot.png)
 
 ## Features
 
