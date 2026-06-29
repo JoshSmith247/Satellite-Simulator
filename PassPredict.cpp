@@ -19,6 +19,14 @@ namespace {
         return topo.elevation;
     }
 
+    // Straight-line distance (km) between two satellites' ECI positions at instant t.
+    double rangeBetween(const libsgp4::SGP4& a, const libsgp4::SGP4& b, const DateTime& t) {
+        libsgp4::Vector pa = a.FindPosition(t).Position();
+        libsgp4::Vector pb = b.FindPosition(t).Position();
+        double dx = pa.x - pb.x, dy = pa.y - pb.y, dz = pa.z - pb.z;
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
     // Bisection for the horizon crossing (elevation == 0) known to lie in (lo, hi),
     // where elevation has opposite signs at the two ends. Refines to ~1 second.
     DateTime refineCrossing(const libsgp4::SGP4& sgp4, Observer& obs,
@@ -132,6 +140,49 @@ std::vector<Pass> predictPasses(const libsgp4::SGP4& sgp4,
 
 double dopplerShiftedHz(double emittedHz, double rangeRateKmS) {
     return emittedHz * (1.0 - rangeRateKmS / C_KM_S);
+}
+
+Conjunction closestApproach(const libsgp4::SGP4& a, const libsgp4::SGP4& b,
+                            const DateTime& start, double hours, double stepSec) {
+    Conjunction c;
+    const DateTime end = start.AddSeconds(hours * 3600.0);
+    try {
+        // Coarse scan: track the smallest sampled separation.
+        DateTime tBest = start;
+        double   rBest = rangeBetween(a, b, start);
+        DateTime t     = start;
+        while (t < end) {
+            DateTime tNext = t.AddSeconds(stepSec);
+            if (tNext > end) tNext = end;
+            double r = rangeBetween(a, b, tNext);
+            if (r < rBest) { rBest = r; tBest = tNext; }
+            if (tNext == end) break;
+            t = tNext;
+        }
+
+        // Golden-section refine within ±one step of the best coarse sample.
+        DateTime lo = tBest.AddSeconds(-stepSec);
+        DateTime hi = tBest.AddSeconds(stepSec);
+        if (lo < start) lo = start;
+        if (end < hi)   hi = end;
+        for (int i = 0; i < 40; ++i) {
+            if ((hi - lo).TotalSeconds() < 0.5) break;
+            DateTime m1(lo.Ticks() + (hi - lo).Ticks() / 3);
+            DateTime m2(lo.Ticks() + 2 * (hi - lo).Ticks() / 3);
+            if (rangeBetween(a, b, m1) < rangeBetween(a, b, m2)) hi = m2;
+            else                                                 lo = m1;
+        }
+        DateTime tm(lo.Ticks() + (hi - lo).Ticks() / 2);
+        double   rm = rangeBetween(a, b, tm);
+        if (rm < rBest) { rBest = rm; tBest = tm; }
+
+        c.minRangeKm = rBest;
+        c.tca        = tBest;
+        c.valid      = true;
+    } catch (...) {
+        c.valid = false;   // decayed / propagation out of range
+    }
+    return c;
 }
 
 } // namespace PassPredict

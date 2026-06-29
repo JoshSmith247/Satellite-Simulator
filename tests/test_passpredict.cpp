@@ -56,6 +56,21 @@ int main() {
     CHECK(offset > 3300.0 && offset < 3500.0, "Doppler magnitude/sign correct (~+3404 Hz)");
     CHECK(PassPredict::dopplerShiftedHz(145.8e6, +7.0) < 145.8e6, "receding shifts down");
 
+    // Conjunction: a satellite against itself must have ~zero closest approach.
+    auto selfCj = PassPredict::closestApproach(sgp4, sgp4, start, 24.0);
+    CHECK(selfCj.valid && selfCj.minRangeKm < 0.001, "self-conjunction min range ~ 0 km");
+    CHECK(selfCj.tca >= start && selfCj.tca <= start.AddSeconds(24.0 * 3600.0),
+          "self-conjunction TCA lies within the window");
+
+    // Conjunction between two distinct objects must be valid and physically plausible.
+    Tle hst("HST",
+        "1 20580U 90037B   24153.45833333  .00000900  00000-0  44000-4 0  9990",
+        "2 20580  28.4700  10.0000 0002800 100.0000 260.0000 15.09000000 12345");
+    SGP4 sgp4b(hst);
+    auto crossCj = PassPredict::closestApproach(sgp4, sgp4b, start, 24.0);
+    CHECK(crossCj.valid && crossCj.minRangeKm > 1.0 && crossCj.minRangeKm < 50000.0,
+          "ISS/HST closest approach is positive and within Earth-orbit scale");
+
     std::printf("\n%s (%d failure%s)\n", failures ? "TESTS FAILED" : "ALL TESTS PASSED",
                 failures, failures == 1 ? "" : "s");
     return failures ? 1 : 0;

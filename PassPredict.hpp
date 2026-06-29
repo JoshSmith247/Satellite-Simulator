@@ -51,6 +51,16 @@ namespace PassPredict {
     // range-rate. f_obs = f_emit * (1 - rangeRate / c).
     double dopplerShiftedHz(double emittedHz, double rangeRateKmS);
 
+    // Closest approach between two satellites over [start, start + hours].
+    struct Conjunction {
+        double            minRangeKm = 0.0;  // smallest separation found
+        libsgp4::DateTime tca;               // time of that closest approach
+        bool              valid = false;     // false if propagation failed (e.g. decayed)
+    };
+    Conjunction closestApproach(const libsgp4::SGP4& a, const libsgp4::SGP4& b,
+                                const libsgp4::DateTime& start, double hours,
+                                double stepSec = 60.0);
+
 } // namespace PassPredict
 
 #endif

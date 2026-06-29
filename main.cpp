@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
@@ -146,6 +147,7 @@ int main()
 
     std::vector<SatTab> tabs;
     int  activeTab = -1;                 // -1 ⇒ no tabs ⇒ empty-state screen
+    bool conjDirty = true;               // conjunction recompute needed (set on tab add/close)
 
     auto addTab = [&](const std::string& id) {
         if ((int)tabs.size() >= MAX_TABS) { exportStatus = "Tab limit reached (max 7)"; return; }
@@ -155,10 +157,12 @@ int main()
         t.loadFuture = std::async(std::launch::async, loadSatelliteData, id);
         tabs.push_back(std::move(t));
         activeTab = (int)tabs.size() - 1;
+        conjDirty = true;
     };
     auto closeTab = [&](int i) {
         if (i < 0 || i >= (int)tabs.size()) return;
         tabs.erase(tabs.begin() + i);
+        conjDirty = true;
         if (tabs.empty())                       activeTab = -1;
         else if (activeTab > i)                 activeTab--;          // keep same tab active
         else if (activeTab >= (int)tabs.size()) activeTab = (int)tabs.size() - 1;
@@ -342,6 +346,17 @@ int main()
         catScroll = 0; catActive = -1;
         lastFilter = catFilter;
     };
+    // Quick-access categories: each just sets the filter over the loaded active catalog,
+    // so "Starlink" yields all currently-active Starlink satellites. Easy to extend.
+    struct Category { const char* label; const char* filter; };
+    static const Category CATEGORIES[] = {
+        { "Starlink", "starlink" },
+        { "OneWeb",   "oneweb"   },
+        { "Iridium",  "iridium"  },
+        { "GPS",      "gps"      },
+    };
+    const Color CHIP_BLUE = {140, 200, 255, 255};   // light blue for the category chips
+
     // Draws the browse-catalog modal (must be called inside a drawing context). Returns the
     // chosen NORAD id when the user picks a row, otherwise an empty string.
     auto drawCatalogModal = [&]() -> std::string {
@@ -356,12 +371,32 @@ int main()
         DrawTextEx(font, loadingCat ? "Loading catalog..." : catStatus.c_str(),
                    {px + 16, py + 38}, 13, 1, LIGHTGRAY);
 
-        float fx = px + 16, fy = py + 60, fw = pw - 32;
+        float fx = px + 16, fy = py + 56, fw = pw - 32;
         DrawTextEx(font, "Filter:", {fx, fy + 4}, 14, 1, RAYWHITE);
         if (GuiTextBox((Rectangle){fx + 56, fy, fw - 56, 26}, catFilter, sizeof(catFilter), catFilterEdit))
             catFilterEdit = !catFilterEdit;
 
-        Rectangle listRect = {fx, fy + 36, fw, ph - 150};
+        // Quick-access category chips (light blue) — click to set the filter.
+        Vector2 mp = GetMousePosition();
+        float chipX = fx, chipY = py + 90;
+        DrawTextEx(font, "Quick:", {chipX, chipY + 3.0f}, 13, 1, GRAY);
+        chipX += 50.0f;
+        for (const Category& cat : CATEGORIES) {
+            float tw = MeasureTextEx(font, cat.label, 14, 1).x;
+            Rectangle chip = {chipX, chipY, tw + 16.0f, 22.0f};
+            bool hov = CheckCollisionPointRec(mp, chip);
+            if (hov) DrawRectangleRec(chip, ColorAlpha(CHIP_BLUE, 0.22f));
+            DrawRectangleLinesEx(chip, 1.0f, CHIP_BLUE);
+            DrawTextEx(font, cat.label, {chipX + 8.0f, chipY + 3.0f}, 14, 1, CHIP_BLUE);
+            if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                std::strncpy(catFilter, cat.filter, sizeof(catFilter) - 1);
+                catFilter[sizeof(catFilter) - 1] = '\0';
+                catFilterEdit = false;
+            }
+            chipX += chip.width + 6.0f;
+        }
+
+        Rectangle listRect = {fx, chipY + 30.0f, fw, ph - 188.0f};
         GuiListViewEx(listRect, filterPtrs.data(), (int)filterPtrs.size(), &catScroll, &catActive, NULL);
         DrawTextEx(font, TextFormat("%d shown", (int)filterPtrs.size()),
                    {fx, py + ph - 64}, 13, 1, GRAY);
@@ -379,6 +414,12 @@ int main()
     };
 
     bool showEditor = false;                // station editor is a global resource (stays app-level)
+
+    // ── Conjunction screening (closest approach between open tabs; app-level) ───
+    bool  showConj   = false;
+    float conjTimer  = 0.0f;
+    struct ConjPair { int i, j; double rangeKm; double tcaUnix; };
+    std::vector<ConjPair> conjPairs;
 
     // ── Hohmann transfer results (recomputed each frame for the active tab) ─────
     // The toggle + target altitude live per-tab on SatTab; these are just scratch.
@@ -518,6 +559,7 @@ int main()
             if (IsKeyPressed(KEY_F)) ToggleFullscreen();
             if (IsKeyPressed(KEY_M) && activeTab >= 0) tabs[activeTab].showMap     = !tabs[activeTab].showMap;
             if (IsKeyPressed(KEY_H) && activeTab >= 0) tabs[activeTab].showHohmann = !tabs[activeTab].showHohmann;
+            if (IsKeyPressed(KEY_X)) { showConj = !showConj; if (showConj) conjDirty = true; }
             if (IsKeyPressed(KEY_E)) { showEditor = !showEditor; if (showEditor) syncEditorBuffers(); }
             if (IsKeyPressed(KEY_C)) exportPasses();
             if (IsKeyPressed(KEY_SPACE)) clock.togglePause();
@@ -654,6 +696,24 @@ int main()
             satPos    = geoToWorld(A.subLat, A.subLon, A.subAlt);
             look      = PassPredict::lookAngle(*A.sgp4, obsGeo, simDt, obs.maskDeg);
             dopplerHz = PassPredict::dopplerShiftedHz(downlinkHz, look.rangeRateKmS) - downlinkHz;
+        }
+
+        // ── Conjunction screening: closest approach between every pair of loaded tabs ──
+        conjTimer += GetFrameTime();
+        if (showConj && (conjDirty || conjTimer >= 3.0f)) {
+            conjDirty = false; conjTimer = 0.0f;
+            conjPairs.clear();
+            for (int i = 0; i < (int)tabs.size(); i++) {
+                if (!tabs[i].sgp4) continue;
+                for (int j = i + 1; j < (int)tabs.size(); j++) {
+                    if (!tabs[j].sgp4) continue;
+                    auto cj = PassPredict::closestApproach(*tabs[i].sgp4, *tabs[j].sgp4, simDt, 24.0);
+                    if (cj.valid)
+                        conjPairs.push_back({ i, j, cj.minRangeKm, SimClock::toUnixSeconds(cj.tca) });
+                }
+            }
+            std::sort(conjPairs.begin(), conjPairs.end(),
+                      [](const ConjPair& a, const ConjPair& b) { return a.rangeKm < b.rangeKm; });
         }
 
         // ── Empty state: no tabs ⇒ gray screen with icon + NORAD search ─────────
@@ -988,13 +1048,42 @@ int main()
             }
         }
 
+        // ── Conjunction panel (toggle X) — closest approach between open tabs ────
+        if (showConj) {
+            const float pw = 330.0f, px = screenW - sidebarWidth - pw - 10.0f, py = 80.0f + TAB_BAR_H;
+            int rows = (int)conjPairs.size(); if (rows > 8) rows = 8;
+            DrawRectangleRec((Rectangle){px, py, pw, 56.0f + rows * 34.0f}, ColorAlpha(BLACK, 0.6f));
+            DrawTextEx(font_bold, "CONJUNCTIONS (24h)", {px + 10, py + 8}, 18, 1.5f, (Color){255,170,60,255});
+            int loaded = 0; for (auto& t : tabs) if (t.sgp4) loaded++;
+            double simU = clock.unixSeconds();
+            if (loaded < 2) {
+                DrawTextEx(font, "Need >= 2 loaded satellites", {px + 10, py + 34}, 14, 1, GRAY);
+            } else {
+                for (int r = 0; r < rows; r++) {
+                    const ConjPair& cp = conjPairs[r];
+                    float ry = py + 34.0f + r * 34.0f;
+                    Color c = cp.rangeKm < 5.0   ? (Color){255,90,90,255}
+                            : cp.rangeKm < 25.0  ? (Color){255,170,60,255}
+                            :                      RAYWHITE;
+                    const char* warn = cp.rangeKm < 5.0 ? "! " : "";
+                    std::string names = TextFormat("%s%s  /  %s", warn,
+                        (tabs[cp.i].tle ? tabs[cp.i].tle->Name() : tabs[cp.i].id).c_str(),
+                        (tabs[cp.j].tle ? tabs[cp.j].tle->Name() : tabs[cp.j].id).c_str());
+                    if (names.size() > 38) names = names.substr(0, 37) + "…";
+                    DrawTextEx(font, names.c_str(), {px + 10, ry}, 14, 1, c);
+                    DrawTextEx(font, TextFormat("min %.1f km   in %s", cp.rangeKm,
+                               fmtDuration(cp.tcaUnix - simU).c_str()), {px + 10, ry + 16}, 13, 1, c);
+                }
+            }
+        }
+
         // Clock readout (shifted below the tab bar)
         float clkY = TAB_BAR_H + 10.0f;
         DrawTextEx(font, simDt.ToString().substr(0, 19).c_str(), {10, clkY}, 20, 2, YELLOW);
         DrawTextEx(font, TextFormat("%s   x%g   Day %.2f",
                    clock.isPaused() ? "PAUSED" : "RUN", clock.speed(), sun.dayOfYear),
                    {10, clkY + 24.0f}, 16, 1, clock.isPaused() ? ORANGE : LIME);
-        DrawTextEx(font, "SPACE pause  [ ] speed  R now  N next  T station  M map  E edit  C export  H hohmann",
+        DrawTextEx(font, "SPACE pause  [ ] speed  R now  N next  T station  M map  E edit  C export  H hohmann  X conj",
                    {10, clkY + 44.0f}, 13, 1, ColorAlpha(RAYWHITE, 0.7f));
         if (!exportStatus.empty())
             DrawTextEx(font, exportStatus.c_str(), {10, screenH - 18.0f}, 13, 1, (Color){120,255,140,255});
@@ -1088,8 +1177,11 @@ int main()
         if (tle) {
             DrawTextEx(font, TextFormat("ID: %s", tle->Name().c_str()),
                        {sx, (float)startY}, 18, 2, RAYWHITE);
-            DrawTextEx(font, TextFormat("TLE epoch: %s", tle->Epoch().ToString().substr(0,10).c_str()),
-                       {sx, (float)(startY + spacing)}, 15, 1, tleFromCache ? ORANGE : LIME);
+            double ageDays = (libsgp4::DateTime::Now() - tle->Epoch()).TotalDays();
+            Color ageColor = ageDays < 3.0 ? LIME : (ageDays < 14.0 ? ORANGE : (Color){255,90,90,255});
+            DrawTextEx(font, TextFormat("TLE: %s  (%.1fd old%s)", tle->Epoch().ToString().substr(0,10).c_str(),
+                       ageDays, tleFromCache ? ", cached" : ""),
+                       {sx, (float)(startY + spacing)}, 15, 1, ageColor);
             DrawTextEx(font, TextFormat("Altitude: %.2f km", altitudeKm),
                        {sx, (float)(startY + spacing * 2)}, 18, 2, RAYWHITE);
             DrawTextEx(font, TextFormat("Inclination: %.4f deg", tle->Inclination(true)),
@@ -1129,13 +1221,17 @@ int main()
             DrawTextEx(font, "cyan = 2-body  /  orange = SGP4", {sx, ry + 2.0f}, 13, 1, (Color){150,150,150,255});
         }
 
-        // Active-tab load status + hint to add more via the tab bar
+        // Active-tab load status + add/refresh controls
         {
-            float by = screenH - 64.0f;
+            float by = screenH - 96.0f;
             if (!A.loadStatus.empty())
                 DrawTextEx(font, A.loadStatus.c_str(), {sx, by}, 13, 1, LIGHTGRAY);
             if (GuiButton((Rectangle){sx, by + 18.0f, 150.0f, 26.0f}, "Browse catalog..."))
                 openCatalog();
+            if (GuiButton((Rectangle){sx, by + 48.0f, 150.0f, 26.0f}, "Refresh TLE") && !loading) {
+                A.loadStatus = "Refreshing...";
+                A.loadFuture = std::async(std::launch::async, loadSatelliteData, A.id);
+            }
         }
 
         // ── Station / link editor (toggle E) ───────────────────────────────────
