@@ -22,6 +22,7 @@
 #include <array>
 #include <cstring>
 #include <cstdlib>
+#include <cctype>
 #include <cmath>
 #include <future>
 #include <chrono>
@@ -63,6 +64,57 @@ static SatLoadResult loadSatelliteData(std::string noradID) {
     return r;
 }
 
+// Result of an asynchronous browsable-catalog fetch (CelesTrak group).
+struct CatalogResult {
+    bool        ok = false;
+    std::string status;
+    std::vector<FetchTLE::SatEntry> entries;
+};
+
+static CatalogResult loadCatalogData(std::string group) {
+    CatalogResult r;
+    bool fromCache = false;
+    std::string raw = FetchTLE::fetchGroupCached(group, &fromCache);
+    r.entries = FetchTLE::parseCatalog(raw);
+    if (r.entries.empty()) {
+        r.status = "Catalog fetch failed";
+        return r;
+    }
+    r.ok = true;
+    r.status = (fromCache ? "Loaded (cached) " : "Loaded ") +
+               std::to_string(r.entries.size()) + " satellites";
+    return r;
+}
+
+// One tracked satellite. Every open tab carries its own propagator + track
+// history so background tabs keep simulating while only the active one is drawn.
+struct SatTab {
+    std::string id;
+    std::shared_ptr<libsgp4::Tle>  tle;
+    std::shared_ptr<libsgp4::SGP4> sgp4;
+    bool        tleFromCache = false;
+    std::string loadStatus   = "Loading...";
+    float       futureInterval = 1.0f;               // minutes between ground-track samples
+    std::vector<Vector3> observedPath, futurePath, keplerPath;
+    std::vector<std::array<float, 2>> futureGeo;     // raw {lat,lon} for the 2D map
+    float  subLat = 0.0f, subLon = 0.0f, subAlt = 0.0f;
+    double lastRecordSim = -1e18;
+    bool   recordBreak = false;
+    bool   forcePassRecompute = true;
+    float  futureTimer = 1e9f;                        // large => recompute on first frame loaded
+    float  passRecomputeTimer = 0.0f;
+    OrbitalMechanics::Elements     kepEl;
+    std::vector<PassPredict::Pass> passes;
+    std::future<SatLoadResult>     loadFuture;        // in-flight network load (per tab)
+
+    // Per-tab view/planning state — what's open is remembered separately for each tab.
+    bool   showMap      = false;
+    bool   showHohmann  = false;
+    double targetAltKm  = 1000.0;                     // Hohmann target circular-orbit altitude
+    char   targetAltBuf[16] = "1000";
+    bool   targetAltEdit = false;
+};
+
 static Color stationPalette(int i) {
     static const Color pal[] = {
         {255, 221,  51, 255}, { 80, 220, 255, 255}, {255, 140,  80, 255},
@@ -84,30 +136,38 @@ int main()
     // ── Radio link (for Doppler) ──────────────────────────────────────────────
     double downlinkHz = 145.800e6;      // ISS APRS/voice default; edit per CubeSat
 
-    // ── Satellite state (async-loaded, runtime-reloadable) ────────────────────
-    std::shared_ptr<libsgp4::Tle>  tle;
-    std::shared_ptr<libsgp4::SGP4> sgp4;
-    bool        tleFromCache = false;
-    std::string loadStatus   = "Loading...";
+    // ── Satellite tabs ────────────────────────────────────────────────────────
+    // Each tab is one tracked satellite. Only the active tab is drawn, but every
+    // tab keeps simulating in the background so each keeps a continuous history.
     std::string exportStatus;
+    const int   FUTURE_POINTS = 360;
+    const float TAB_BAR_H     = 30.0f;
+    const int   MAX_TABS      = 7;
 
-    const int FUTURE_POINTS  = 360;
-    float     futureInterval = 1.0f;    // minutes between ground-track samples (set on load)
+    std::vector<SatTab> tabs;
+    int  activeTab = -1;                 // -1 ⇒ no tabs ⇒ empty-state screen
 
-    std::vector<Vector3> observedPath;               // model-space record of where the satellite
-                                                     // has ACTUALLY been this session (a log, not a
-                                                     // prediction); breaks (NaN) span time jumps
-    std::vector<Vector3> futurePath;                 // model-space, for the 3D globe
-    std::vector<Vector3> keplerPath;                 // model-space, for the 3D globe
-    std::vector<std::array<float, 2>> futureGeo;     // raw {lat,lon} for the 2D map
-    float  subLat = 0.0f, subLon = 0.0f, subAlt = 0.0f;  // current sub-point (subAlt in scene units)
-    double lastRecordSim = -1e18;                    // sim-time of last recorded point (Unix s)
-    bool   recordBreak = false;                      // start a new track segment after a time jump
-    bool   forcePassRecompute = false;
+    auto addTab = [&](const std::string& id) {
+        if ((int)tabs.size() >= MAX_TABS) { exportStatus = "Tab limit reached (max 7)"; return; }
+        SatTab t;
+        t.id         = id;
+        t.loadStatus = "Loading...";
+        t.loadFuture = std::async(std::launch::async, loadSatelliteData, id);
+        tabs.push_back(std::move(t));
+        activeTab = (int)tabs.size() - 1;
+    };
+    auto closeTab = [&](int i) {
+        if (i < 0 || i >= (int)tabs.size()) return;
+        tabs.erase(tabs.begin() + i);
+        if (tabs.empty())                       activeTab = -1;
+        else if (activeTab > i)                 activeTab--;          // keep same tab active
+        else if (activeTab >= (int)tabs.size()) activeTab = (int)tabs.size() - 1;
+    };
+    // Observer/time changes invalidate every tab's predictions, not just the active one.
+    auto markAllPassRecompute = [&]{ for (auto& t : tabs) t.forcePassRecompute = true; };
+    auto markAllRecordBreak   = [&]{ for (auto& t : tabs) t.recordBreak        = true; };
 
-    std::string target_ID = "25544";    // ISS (Zarya) — default
-    std::future<SatLoadResult> loadFuture =
-        std::async(std::launch::async, loadSatelliteData, target_ID);
+    addTab("25544");                     // ISS (Zarya) — default tab on startup
 
     // ── Simulation clock ──────────────────────────────────────────────────────
     SimClock clock;
@@ -212,12 +272,6 @@ int main()
 
     // ── Orbit data ─────────────────────────────────────────────────────────────
     const float FUTURE_UPDATE_S = 5.0f;
-    observedPath.reserve(4096);
-    futurePath.reserve(FUTURE_POINTS);
-    keplerPath.reserve(FUTURE_POINTS);
-    futureGeo.reserve(FUTURE_POINTS);
-    float futureTimer = FUTURE_UPDATE_S;
-    OrbitalMechanics::Elements kepEl;
 
     Model satModel = LoadModel("satellite.obj");
     satModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = GRAY;
@@ -237,24 +291,97 @@ int main()
         SetTextureFilter(font_bold.texture, TEXTURE_FILTER_TRILINEAR);
     }
 
-    // ── Pass prediction state ──────────────────────────────────────────────────
-    std::vector<PassPredict::Pass> passes;
-    float passRecomputeTimer = 0.0f;
+    // ── Add-satellite UI state ──────────────────────────────────────────────────
+    char addInput[16]    = {0};
+    bool addEditMode     = false;
+    bool showAddOverlay  = false;        // '+' opens the search box over the scene
 
-    // ── UI state ───────────────────────────────────────────────────────────────
-    char noradInput[16];
-    std::strncpy(noradInput, target_ID.c_str(), sizeof(noradInput) - 1);
-    noradInput[sizeof(noradInput) - 1] = '\0';
-    bool noradEditMode = false;
+    // Procedural satellite + question-mark icon for the add UI (no asset needed).
+    auto drawSatQuestionIcon = [&](float cx, float cy) {
+        Color body = (Color){150,160,180,255}, panel = (Color){70,110,180,255};
+        DrawRectangle((int)(cx-16),(int)(cy-12), 32, 24, body);
+        DrawRectangle((int)(cx-46),(int)(cy-8),  24, 16, panel);
+        DrawRectangle((int)(cx+22),(int)(cy-8),  24, 16, panel);
+        DrawLineEx({cx-22,cy},{cx-16,cy}, 2, body);
+        DrawLineEx({cx+16,cy},{cx+22,cy}, 2, body);
+        Vector2 q = MeasureTextEx(font_bold, "?", 30, 1);
+        DrawTextEx(font_bold, "?", {cx - q.x*0.5f, cy - q.y*0.5f - 1.0f}, 30, 1, RAYWHITE);
+    };
 
-    bool showMap    = false;
-    bool showEditor = false;
+    // ── Browse-catalog UI state ─────────────────────────────────────────────────
+    bool showCatalog    = false;
+    char catFilter[32]  = {0};
+    bool catFilterEdit  = false;
+    int  catScroll = 0, catActive = -1;
+    std::string catStatus = "Loading catalog...";
+    std::vector<FetchTLE::SatEntry> catalog;          // full fetched catalog
+    std::future<CatalogResult>      catFuture;
+    // Filtered view rebuilt only when the filter text (or catalog) changes.
+    std::string lastFilter = "\x01";                  // sentinel ⇒ forces first rebuild
+    std::vector<std::string> filterLabels;            // "<name>   <id>" backing strings
+    std::vector<std::string> filterIds;               // NORAD id parallel to filterLabels
+    std::vector<char*>       filterPtrs;              // pointers into filterLabels (for GuiListViewEx)
 
-    // ── Hohmann transfer mode ──────────────────────────────────────────────────
-    bool   showHohmann   = false;
-    double targetAltKm   = 1000.0;          // target circular-orbit altitude
-    char   targetAltBuf[16] = "1000";
-    bool   targetAltEdit = false;
+    auto openCatalog = [&]() {
+        showCatalog = true;
+        if (catalog.empty() && !catFuture.valid())
+            catFuture = std::async(std::launch::async, loadCatalogData, std::string("active"));
+    };
+    auto rebuildFilter = [&]() {
+        auto lower = [](std::string s) { for (char& c : s) c = (char)std::tolower((unsigned char)c); return s; };
+        std::string needle = lower(catFilter);
+        filterLabels.clear(); filterIds.clear(); filterPtrs.clear();
+        for (const auto& e : catalog) {
+            if (needle.empty() || lower(e.name + " " + e.id).find(needle) != std::string::npos) {
+                filterLabels.push_back(e.name + "   " + e.id);
+                filterIds.push_back(e.id);
+            }
+        }
+        filterPtrs.reserve(filterLabels.size());
+        for (auto& s : filterLabels) filterPtrs.push_back(s.data());
+        catScroll = 0; catActive = -1;
+        lastFilter = catFilter;
+    };
+    // Draws the browse-catalog modal (must be called inside a drawing context). Returns the
+    // chosen NORAD id when the user picks a row, otherwise an empty string.
+    auto drawCatalogModal = [&]() -> std::string {
+        if (!showCatalog) return std::string();
+        float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
+        DrawRectangleRec((Rectangle){0, 0, sw, sh}, ColorAlpha(BLACK, 0.6f));
+        float pw = 420.0f, ph = 460.0f, px = (sw - pw) * 0.5f, py = (sh - ph) * 0.5f;
+        DrawRectangleRec((Rectangle){px, py, pw, ph}, (Color){24, 26, 32, 255});
+        DrawRectangleLinesEx((Rectangle){px, py, pw, ph}, 2, SKYBLUE);
+        DrawTextEx(font_bold, "BROWSE SATELLITES", {px + 16, py + 12}, 18, 1.5f, SKYBLUE);
+        bool loadingCat = catFuture.valid();
+        DrawTextEx(font, loadingCat ? "Loading catalog..." : catStatus.c_str(),
+                   {px + 16, py + 38}, 13, 1, LIGHTGRAY);
+
+        float fx = px + 16, fy = py + 60, fw = pw - 32;
+        DrawTextEx(font, "Filter:", {fx, fy + 4}, 14, 1, RAYWHITE);
+        if (GuiTextBox((Rectangle){fx + 56, fy, fw - 56, 26}, catFilter, sizeof(catFilter), catFilterEdit))
+            catFilterEdit = !catFilterEdit;
+
+        Rectangle listRect = {fx, fy + 36, fw, ph - 150};
+        GuiListViewEx(listRect, filterPtrs.data(), (int)filterPtrs.size(), &catScroll, &catActive, NULL);
+        DrawTextEx(font, TextFormat("%d shown", (int)filterPtrs.size()),
+                   {fx, py + ph - 64}, 13, 1, GRAY);
+
+        std::string picked;
+        if (catActive >= 0 && catActive < (int)filterIds.size()) {
+            picked = filterIds[catActive];
+            showCatalog = false; catActive = -1;
+        }
+        if ((GuiButton((Rectangle){px + pw - 96, py + ph - 40, 80, 28}, "Close") ||
+             IsKeyPressed(KEY_ESCAPE)) && picked.empty()) {
+            showCatalog = false; catFilterEdit = false; catActive = -1;
+        }
+        return picked;
+    };
+
+    bool showEditor = false;                // station editor is a global resource (stays app-level)
+
+    // ── Hohmann transfer results (recomputed each frame for the active tab) ─────
+    // The toggle + target altitude live per-tab on SatTab; these are just scratch.
     OrbitalMechanics::Hohmann hoh;          // last computed transfer
     bool    hohValid = false;
     Vector3 hohBurn1W{}, hohBurn2W{};       // burn-point world positions (for 2D labels)
@@ -288,10 +415,20 @@ int main()
     };
 
     auto exportPasses = [&]() {
+        if (activeTab < 0) return;
+        const auto& passes = tabs[activeTab].passes;
         if (passes.empty()) { exportStatus = "No passes to export"; return; }
         std::error_code ec;
         std::filesystem::create_directories("exports", ec);
-        std::string fn = "exports/passes_" + target_ID + "_" + stations[selectedStation].name + ".csv";
+        // Sanitize path components — station names like "0N/0E" contain characters
+        // (e.g. '/') that would otherwise be read as directory separators.
+        auto safe = [](std::string s) {
+            for (char& c : s)
+                if (!std::isalnum((unsigned char)c) && c != '-' && c != '.') c = '_';
+            return s;
+        };
+        std::string fn = "exports/passes_" + safe(tabs[activeTab].id) + "_" +
+                         safe(stations[selectedStation].name) + ".csv";
         std::ofstream o(fn);
         if (!o) { exportStatus = "Export failed: " + fn; return; }
         o << "aos_utc,los_utc,tca_utc,max_elevation_deg,duration_s,aos_az_deg,los_az_deg\n";
@@ -320,24 +457,41 @@ int main()
         SetMouseScale((float)GetScreenWidth() / GetRenderWidth(),
                       (float)GetScreenHeight() / GetRenderHeight());
 
-        // ── Async load: swap in the satellite once the worker thread finishes ──
-        if (loadFuture.valid() &&
-            loadFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            SatLoadResult res = loadFuture.get();
-            loadStatus = res.status;
-            if (res.ok) {
-                tle = res.tle; sgp4 = res.sgp4; tleFromCache = res.fromCache; target_ID = res.id;
-                futureInterval = (float)(1440.0 / tle->MeanMotion()) / FUTURE_POINTS;
-                observedPath.clear(); lastRecordSim = -1e18;
-                futurePath.clear(); keplerPath.clear(); futureGeo.clear();
-                futureTimer = FUTURE_UPDATE_S;
-                forcePassRecompute = true;
+        // ── Async load: swap each satellite in once its worker thread finishes ──
+        for (auto& t : tabs) {
+            if (t.loadFuture.valid() &&
+                t.loadFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                SatLoadResult res = t.loadFuture.get();
+                t.loadStatus = res.status;
+                if (res.ok) {
+                    t.tle = res.tle; t.sgp4 = res.sgp4; t.tleFromCache = res.fromCache; t.id = res.id;
+                    t.futureInterval = (float)(1440.0 / t.tle->MeanMotion()) / FUTURE_POINTS;
+                    t.observedPath.clear(); t.lastRecordSim = -1e18;
+                    t.futurePath.clear(); t.keplerPath.clear(); t.futureGeo.clear();
+                    t.futureTimer = FUTURE_UPDATE_S;
+                    t.forcePassRecompute = true;
+                }
             }
         }
-        bool loading = loadFuture.valid();
 
-        bool textActive   = noradEditMode || activeEditField != -1 || targetAltEdit;
-        bool blockCamera  = textActive || showEditor;
+        // Catalog fetch: swap in entries once the worker finishes, then rebuild filter.
+        if (catFuture.valid() &&
+            catFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            CatalogResult cr = catFuture.get();
+            catStatus = cr.status;
+            catalog   = std::move(cr.entries);
+            lastFilter = "\x01";                  // force rebuild below
+        }
+        if (showCatalog && lastFilter != catFilter) rebuildFilter();
+
+        // Deferred tab-bar actions (applied after rendering so refs stay valid).
+        int  reqActivate = -1, reqClose = -1;
+        bool reqAdd = false;
+        std::string reqAddId;            // NORAD id to open as a new tab
+
+        bool textActive   = addEditMode || activeEditField != -1 || catFilterEdit ||
+                            (activeTab >= 0 && tabs[activeTab].targetAltEdit);
+        bool blockCamera  = textActive || showEditor || showAddOverlay || activeTab < 0;
 
         // ── Input: camera ──────────────────────────────────────────────────────
         Vector2 mouseDelta = GetMouseDelta();
@@ -362,27 +516,27 @@ int main()
         // ── Input: hotkeys (suppressed while typing in a text field) ────────────
         if (!textActive) {
             if (IsKeyPressed(KEY_F)) ToggleFullscreen();
-            if (IsKeyPressed(KEY_M)) showMap = !showMap;
-            if (IsKeyPressed(KEY_H)) showHohmann = !showHohmann;
+            if (IsKeyPressed(KEY_M) && activeTab >= 0) tabs[activeTab].showMap     = !tabs[activeTab].showMap;
+            if (IsKeyPressed(KEY_H) && activeTab >= 0) tabs[activeTab].showHohmann = !tabs[activeTab].showHohmann;
             if (IsKeyPressed(KEY_E)) { showEditor = !showEditor; if (showEditor) syncEditorBuffers(); }
             if (IsKeyPressed(KEY_C)) exportPasses();
             if (IsKeyPressed(KEY_SPACE)) clock.togglePause();
             if (IsKeyPressed(KEY_RIGHT_BRACKET)) clock.setSpeed(fminf(clock.speed() * 2.0, 100000.0));
             if (IsKeyPressed(KEY_LEFT_BRACKET))  clock.setSpeed(fmaxf(clock.speed() * 0.5, 0.25));
-            if (IsKeyPressed(KEY_R)) { clock.resetToNow(); forcePassRecompute = true; recordBreak = true; }
+            if (IsKeyPressed(KEY_R)) { clock.resetToNow(); markAllPassRecompute(); markAllRecordBreak(); }
             if (IsKeyPressed(KEY_T)) {
                 selectedStation = (selectedStation + 1) % (int)stations.size();
-                forcePassRecompute = true;
+                markAllPassRecompute();
             }
-            if (IsKeyPressed(KEY_N)) {
+            if (IsKeyPressed(KEY_N) && activeTab >= 0) {
                 double simU = clock.unixSeconds();
-                for (const auto& p : passes) {
+                for (const auto& p : tabs[activeTab].passes) {
                     double aosU = SimClock::toUnixSeconds(p.aos);
                     if (aosU > simU + 1.0) {
                         clock.setUnixSeconds(aosU - 10.0);
                         clock.setSpeed(1.0);
-                        forcePassRecompute = true;
-                        recordBreak = true;   // don't connect the log across the jump
+                        markAllPassRecompute();
+                        markAllRecordBreak();   // don't connect logs across the jump
                         break;
                     }
                 }
@@ -430,74 +584,123 @@ int main()
         for (size_t i = 0; i < stations.size(); i++)
             stationPositions[i] = geoToWorld(stations[i].lat, stations[i].lon, 0.0f);
 
-        Vector3 satPos = Vector3Zero();
-        PassPredict::LookAngle look;
-        double dopplerHz = 0.0;
-
-        if (sgp4) {
+        // ── Simulate every tab (background sim keeps each history continuous) ──
+        const GroundStation&   obs = stations[selectedStation];
+        libsgp4::CoordGeodetic obsGeo(obs.lat, obs.lon, obs.altKm);
+        const double RECORD_INTERVAL = 3.0;   // sim seconds between observed-track samples
+        double simU = clock.unixSeconds();
+        for (auto& t : tabs) {
+            if (!t.sgp4) continue;
             try {
-                auto sub = FetchTLE::getSubPoint(*sgp4, simDt);
-                subLat = sub[0]; subLon = sub[1]; subAlt = sub[2] * KM_TO_SCENE;
-                satPos = geoToWorld(sub[0], sub[1], subAlt);
+                auto sub = FetchTLE::getSubPoint(*t.sgp4, simDt);
+                t.subLat = sub[0]; t.subLon = sub[1]; t.subAlt = sub[2] * KM_TO_SCENE;
             } catch (const std::exception& e) {
                 TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
             }
 
-            // Record where the satellite has ACTUALLY been this session. We log the
-            // current sub-point whenever the simulation has advanced past a sampling
-            // interval — so it's a real trace of what we've watched, at any time speed,
-            // not a backward TLE extrapolation. A time jump (R/N) starts a new segment.
-            const double RECORD_INTERVAL = 3.0;   // sim seconds between samples
-            double simU = clock.unixSeconds();
-            if (lastRecordSim <= -1e17 || std::fabs(simU - lastRecordSim) >= RECORD_INTERVAL) {
-                if (recordBreak && !observedPath.empty())
-                    observedPath.push_back({NAN, NAN, NAN});   // break: don't connect across the jump
-                recordBreak = false;
-                observedPath.push_back(geoToModel(subLat, subLon, subAlt));
-                lastRecordSim = simU;
-                if ((int)observedPath.size() > 10000) observedPath.erase(observedPath.begin());
+            // Record where the satellite has ACTUALLY been this session (a real trace
+            // at whatever time speed, not a backward extrapolation). A jump (R/N) breaks
+            // the segment so the line isn't connected across the gap.
+            if (t.lastRecordSim <= -1e17 || std::fabs(simU - t.lastRecordSim) >= RECORD_INTERVAL) {
+                if (t.recordBreak && !t.observedPath.empty())
+                    t.observedPath.push_back({NAN, NAN, NAN});
+                t.recordBreak = false;
+                t.observedPath.push_back(geoToModel(t.subLat, t.subLon, t.subAlt));
+                t.lastRecordSim = simU;
+                if ((int)t.observedPath.size() > 10000) t.observedPath.erase(t.observedPath.begin());
             }
 
-            futureTimer += GetFrameTime();
-            if (futureTimer >= FUTURE_UPDATE_S) {
-                futureTimer = 0.0f;
-                futurePath.clear(); futureGeo.clear();
-                auto futureSub = FetchTLE::getFutureSubPoints(*sgp4, FUTURE_POINTS, futureInterval, simDt);
+            t.futureTimer += GetFrameTime();
+            if (t.futureTimer >= FUTURE_UPDATE_S) {
+                t.futureTimer = 0.0f;
+                t.futurePath.clear(); t.futureGeo.clear();
+                auto futureSub = FetchTLE::getFutureSubPoints(*t.sgp4, FUTURE_POINTS, t.futureInterval, simDt);
                 for (auto& s : futureSub) {
-                    futurePath.push_back(geoToModel(s[0], s[1], s[2] * KM_TO_SCENE));
-                    futureGeo.push_back({s[0], s[1]});
+                    t.futurePath.push_back(geoToModel(s[0], s[1], s[2] * KM_TO_SCENE));
+                    t.futureGeo.push_back({s[0], s[1]});
                 }
-                keplerPath.clear();
-                kepEl = OrbitalMechanics::fromStateVector(FetchTLE::getStateVector(*sgp4, simDt));
+                t.keplerPath.clear();
+                t.kepEl = OrbitalMechanics::fromStateVector(FetchTLE::getStateVector(*t.sgp4, simDt));
                 for (int i = 0; i < FUTURE_POINTS; i++) {
-                    double dtSec = (double)i * futureInterval * 60.0;
-                    auto p = OrbitalMechanics::propagate(kepEl, dtSec);
+                    double dtSec = (double)i * t.futureInterval * 60.0;
+                    auto p = OrbitalMechanics::propagate(t.kepEl, dtSec);
                     libsgp4::CoordGeodetic g =
                         libsgp4::Eci(simDt.AddSeconds(dtSec),
                                      libsgp4::Vector(p[0], p[1], p[2])).ToGeodetic();
-                    keplerPath.push_back(geoToModel((float)(g.latitude  * RAD2DEG),
-                                                    (float)(g.longitude * RAD2DEG),
-                                                    (float)(g.altitude  * KM_TO_SCENE)));
+                    t.keplerPath.push_back(geoToModel((float)(g.latitude  * RAD2DEG),
+                                                      (float)(g.longitude * RAD2DEG),
+                                                      (float)(g.altitude  * KM_TO_SCENE)));
                 }
             }
 
-            // Observer-relative geometry + pass prediction
-            const GroundStation& obs = stations[selectedStation];
-            libsgp4::CoordGeodetic obsGeo(obs.lat, obs.lon, obs.altKm);
-            look = PassPredict::lookAngle(*sgp4, obsGeo, simDt, obs.maskDeg);
-            dopplerHz = PassPredict::dopplerShiftedHz(downlinkHz, look.rangeRateKmS) - downlinkHz;
-
-            passRecomputeTimer += GetFrameTime();
-            if (forcePassRecompute || passRecomputeTimer >= 2.0f) {
-                forcePassRecompute = false;
-                passRecomputeTimer = 0.0f;
+            t.passRecomputeTimer += GetFrameTime();
+            if (t.forcePassRecompute || t.passRecomputeTimer >= 2.0f) {
+                t.forcePassRecompute = false;
+                t.passRecomputeTimer = 0.0f;
                 try {
-                    passes = PassPredict::predictPasses(*sgp4, obsGeo, simDt, 24.0, obs.maskDeg);
+                    t.passes = PassPredict::predictPasses(*t.sgp4, obsGeo, simDt, 24.0, obs.maskDeg);
                 } catch (const std::exception& e) {
                     TraceLog(LOG_WARNING, "Pass prediction error: %s", e.what());
                 }
             }
         }
+
+        // ── Active-tab geometry (observer-relative; drives the globe + sidebar) ──
+        Vector3 satPos = Vector3Zero();
+        PassPredict::LookAngle look;
+        double dopplerHz = 0.0;
+        if (activeTab >= 0 && tabs[activeTab].sgp4) {
+            SatTab& A = tabs[activeTab];
+            satPos    = geoToWorld(A.subLat, A.subLon, A.subAlt);
+            look      = PassPredict::lookAngle(*A.sgp4, obsGeo, simDt, obs.maskDeg);
+            dopplerHz = PassPredict::dopplerShiftedHz(downlinkHz, look.rangeRateKmS) - downlinkHz;
+        }
+
+        // ── Empty state: no tabs ⇒ gray screen with icon + NORAD search ─────────
+        if (activeTab < 0) {
+            BeginDrawing();
+            ClearBackground((Color){26, 28, 34, 255});
+            // Author the UI in logical coords and scale up to the (HiDPI) framebuffer,
+            // matching the main path so raygui hit-tests line up with the scaled mouse.
+            rlPushMatrix();
+            rlScalef((float)GetRenderWidth() / GetScreenWidth(),
+                     (float)GetRenderHeight() / GetScreenHeight(), 1.0f);
+            float cx = GetScreenWidth() * 0.5f, cy = GetScreenHeight() * 0.5f;
+            drawSatQuestionIcon(cx, cy - 70.0f);
+            const char* msg = "No satellites tracked";
+            Vector2 mw = MeasureTextEx(font_bold, msg, 24, 1);
+            DrawTextEx(font_bold, msg, {cx - mw.x * 0.5f, cy - 6.0f}, 24, 1, RAYWHITE);
+            float bw = 200.0f, bh = 30.0f, bx = cx - (bw + 80.0f) * 0.5f, by = cy + 44.0f;
+            DrawTextEx(font, "Add satellite by NORAD ID:", {bx, by - 22.0f}, 15, 1, LIGHTGRAY);
+            if (GuiTextBox((Rectangle){bx, by, bw, bh}, addInput, sizeof(addInput), addEditMode))
+                addEditMode = !addEditMode;
+            if ((GuiButton((Rectangle){bx + bw + 8.0f, by, 72.0f, bh}, "Add") ||
+                 (addEditMode && IsKeyPressed(KEY_ENTER))) && addInput[0]) {
+                addEditMode = false; reqAddId = addInput; reqAdd = true;
+            }
+            if (GuiButton((Rectangle){bx, by + 40.0f, bw + 80.0f, bh}, "Browse catalog..."))
+                openCatalog();
+            std::string pick = drawCatalogModal();
+            if (!pick.empty()) { reqAddId = pick; reqAdd = true; }
+            rlPopMatrix();
+            EndDrawing();
+            if (reqAdd) { addTab(reqAddId); addInput[0] = '\0'; showCatalog = false; }
+            continue;
+        }
+
+        // Bind the active tab's state so the existing render code reads unchanged.
+        SatTab& A = tabs[activeTab];
+        auto&  tle = A.tle;  auto& sgp4 = A.sgp4;
+        auto&  observedPath = A.observedPath; auto& futurePath = A.futurePath;
+        auto&  keplerPath   = A.keplerPath;   auto& futureGeo  = A.futureGeo;
+        auto&  kepEl = A.kepEl; auto& passes = A.passes;
+        float  subLat = A.subLat, subLon = A.subLon;
+        bool   tleFromCache = A.tleFromCache;
+        bool   loading = A.loadFuture.valid();
+        // Per-tab view/planning state (so "what's open" is remembered per tab).
+        auto&  showMap = A.showMap; auto& showHohmann = A.showHohmann;
+        auto&  targetAltKm = A.targetAltKm; auto& targetAltBuf = A.targetAltBuf;
+        auto&  targetAltEdit = A.targetAltEdit;
 
         SetShaderValue(shader,    lightPosLoc,    &sunPos,           SHADER_UNIFORM_VEC3);
         SetShaderValue(shader,    viewPosLoc,     &camera.position,  SHADER_UNIFORM_VEC3);
@@ -758,7 +961,7 @@ int main()
 
         // Next-passes panel
         {
-            const float px = 10.0f, py = 80.0f, pw = 330.0f;
+            const float px = 10.0f, py = 80.0f + TAB_BAR_H, pw = 330.0f;
             int rows = (int)passes.size(); if (rows > 6) rows = 6;
             DrawRectangleRec((Rectangle){px, py, pw, 64.0f + rows * 38.0f}, ColorAlpha(BLACK, 0.55f));
             DrawTextEx(font_bold, TextFormat("PASSES @ %s", stations[selectedStation].name.c_str()),
@@ -785,19 +988,20 @@ int main()
             }
         }
 
-        // Clock readout
-        DrawTextEx(font, simDt.ToString().substr(0, 19).c_str(), {10, 10}, 20, 2, YELLOW);
+        // Clock readout (shifted below the tab bar)
+        float clkY = TAB_BAR_H + 10.0f;
+        DrawTextEx(font, simDt.ToString().substr(0, 19).c_str(), {10, clkY}, 20, 2, YELLOW);
         DrawTextEx(font, TextFormat("%s   x%g   Day %.2f",
                    clock.isPaused() ? "PAUSED" : "RUN", clock.speed(), sun.dayOfYear),
-                   {10, 34}, 16, 1, clock.isPaused() ? ORANGE : LIME);
+                   {10, clkY + 24.0f}, 16, 1, clock.isPaused() ? ORANGE : LIME);
         DrawTextEx(font, "SPACE pause  [ ] speed  R now  N next  T station  M map  E edit  C export  H hohmann",
-                   {10, 54}, 13, 1, ColorAlpha(RAYWHITE, 0.7f));
+                   {10, clkY + 44.0f}, 13, 1, ColorAlpha(RAYWHITE, 0.7f));
         if (!exportStatus.empty())
             DrawTextEx(font, exportStatus.c_str(), {10, screenH - 18.0f}, 13, 1, (Color){120,255,140,255});
 
         // ── Hohmann transfer panel + burn labels (toggle H) ─────────────────────
         if (showHohmann) {
-            const float px = 360.0f, py = 80.0f, pw = 300.0f, ph = 212.0f;
+            const float px = 360.0f, py = 80.0f + TAB_BAR_H, pw = 300.0f, ph = 212.0f;
             DrawRectangleRec((Rectangle){px, py, pw, ph}, ColorAlpha(BLACK, 0.6f));
             DrawTextEx(font_bold, "HOHMANN TRANSFER", {px + 12, py + 10}, 18, 1.5f, (Color){255, 170, 60, 255});
             DrawLine((int)(px + 12), (int)(py + 34), (int)(px + pw - 12), (int)(py + 34), GRAY);
@@ -925,20 +1129,13 @@ int main()
             DrawTextEx(font, "cyan = 2-body  /  orange = SGP4", {sx, ry + 2.0f}, 13, 1, (Color){150,150,150,255});
         }
 
-        // NORAD ID entry
+        // Active-tab load status + hint to add more via the tab bar
         {
-            float by = screenH - 80.0f;
-            DrawTextEx(font, "Load NORAD ID:", {sx, by - 22}, 15, 1, RAYWHITE);
-            if (GuiTextBox((Rectangle){sx, by, 110, 28}, noradInput, sizeof(noradInput), noradEditMode))
-                noradEditMode = !noradEditMode;
-            if ((GuiButton((Rectangle){sx + 120, by, 70, 28}, loading ? "..." : "Load") ||
-                 (noradEditMode && IsKeyPressed(KEY_ENTER))) && !loading) {
-                noradEditMode = false;
-                loadStatus = "Loading...";
-                loadFuture = std::async(std::launch::async, loadSatelliteData, std::string(noradInput));
-            }
-            if (!loadStatus.empty())
-                DrawTextEx(font, loadStatus.c_str(), {sx, by + 32}, 13, 1, LIGHTGRAY);
+            float by = screenH - 64.0f;
+            if (!A.loadStatus.empty())
+                DrawTextEx(font, A.loadStatus.c_str(), {sx, by}, 13, 1, LIGHTGRAY);
+            if (GuiButton((Rectangle){sx, by + 18.0f, 150.0f, 26.0f}, "Browse catalog..."))
+                openCatalog();
         }
 
         // ── Station / link editor (toggle E) ───────────────────────────────────
@@ -972,7 +1169,7 @@ int main()
                 stations[selectedStation].altKm   = (float)atof(altBuf);
                 stations[selectedStation].maskDeg = (float)atof(maskBuf);
                 downlinkHz = atof(freqBuf) * 1e6;
-                forcePassRecompute = true;
+                markAllPassRecompute();
             }
             if (GuiButton((Rectangle){ex + 112, byrow, 88, 28}, "Add")) {
                 activeEditField = -1;
@@ -980,14 +1177,14 @@ int main()
                                      stationPalette((int)stations.size()) });
                 selectedStation = (int)stations.size() - 1;
                 syncEditorBuffers();
-                forcePassRecompute = true;
+                markAllPassRecompute();
             }
             if (GuiButton((Rectangle){ex + 208, byrow, 96, 28}, "Delete") && stations.size() > 1) {
                 activeEditField = -1;
                 stations.erase(stations.begin() + selectedStation);
                 if (selectedStation >= (int)stations.size()) selectedStation = (int)stations.size() - 1;
                 syncEditorBuffers();
-                forcePassRecompute = true;
+                markAllPassRecompute();
             }
             if (GuiButton((Rectangle){ex + 16, byrow + 36.0f, 288, 28}, "Close")) {
                 showEditor = false; activeEditField = -1;
@@ -996,11 +1193,83 @@ int main()
                        {ex + 16, byrow + 70.0f}, 12, 1, GRAY);
         }
 
+        // ── Tab bar (top strip, up to the sidebar) ──────────────────────────────
+        {
+            float barW = screenW - sidebarWidth;
+            DrawRectangleRec((Rectangle){0, 0, barW, TAB_BAR_H}, (Color){18, 20, 26, 235});
+            DrawLineEx({0, TAB_BAR_H}, {barW, TAB_BAR_H}, 1.0f, (Color){60, 60, 70, 255});
+            Vector2 mp = GetMousePosition();
+            const float TW = 150.0f, TH = TAB_BAR_H - 6.0f;
+            float tx = 6.0f;
+            for (int i = 0; i < (int)tabs.size(); i++) {
+                Rectangle r = {tx, 3.0f, TW, TH};
+                bool act = (i == activeTab);
+                DrawRectangleRec(r, act ? (Color){44, 70, 110, 255} : (Color){32, 34, 42, 255});
+                DrawRectangleLinesEx(r, 1.0f, act ? SKYBLUE : (Color){70, 70, 82, 255});
+                std::string title = tabs[i].tle ? tabs[i].tle->Name() : ("Loading " + tabs[i].id);
+                if (title.size() > 16) title = title.substr(0, 15) + "…";
+                DrawTextEx(font, title.c_str(), {r.x + 8, r.y + 5}, 15, 1,
+                           act ? RAYWHITE : (Color){190, 190, 200, 255});
+                Rectangle xr = {r.x + TW - 19.0f, r.y + 4.0f, 15.0f, 15.0f};
+                bool xhover = CheckCollisionPointRec(mp, xr);
+                DrawTextEx(font_bold, "x", {xr.x + 3.0f, xr.y - 1.0f}, 16, 1, xhover ? RED : GRAY);
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if (xhover)                          reqClose    = i;
+                    else if (CheckCollisionPointRec(mp, r)) reqActivate = i;
+                }
+                tx += TW + 4.0f;
+            }
+            if ((int)tabs.size() < MAX_TABS) {       // hide '+' once the 7-tab cap is reached
+                Rectangle pr = {tx, 3.0f, TH, TH};
+                bool phover = CheckCollisionPointRec(mp, pr);
+                DrawRectangleRec(pr, phover ? (Color){44, 70, 110, 255} : (Color){32, 34, 42, 255});
+                DrawRectangleLinesEx(pr, 1.0f, (Color){70, 70, 82, 255});
+                DrawTextEx(font_bold, "+", {pr.x + 7.0f, pr.y + 2.0f}, 20, 1, RAYWHITE);
+                if (phover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) { showAddOverlay = true; addEditMode = true; }
+            }
+        }
+
+        // ── Add-satellite overlay (opened by '+') ───────────────────────────────
+        if (showAddOverlay) {
+            DrawRectangleRec((Rectangle){0, 0, screenW, screenH}, ColorAlpha(BLACK, 0.55f));
+            float cx = screenW * 0.5f, cy = screenH * 0.5f, pw = 360.0f, ph = 210.0f;
+            DrawRectangleRec((Rectangle){cx - pw * 0.5f, cy - ph * 0.5f, pw, ph}, (Color){26, 28, 34, 255});
+            DrawRectangleLinesEx((Rectangle){cx - pw * 0.5f, cy - ph * 0.5f, pw, ph}, 2, SKYBLUE);
+            drawSatQuestionIcon(cx, cy - 52.0f);
+            float bw = 200.0f, bh = 30.0f, bx = cx - (bw + 80.0f) * 0.5f, by = cy + 28.0f;
+            DrawTextEx(font, "Add satellite by NORAD ID:", {bx, by - 22.0f}, 15, 1, LIGHTGRAY);
+            if (GuiTextBox((Rectangle){bx, by, bw, bh}, addInput, sizeof(addInput), addEditMode))
+                addEditMode = !addEditMode;
+            if ((GuiButton((Rectangle){bx + bw + 8.0f, by, 72.0f, bh}, "Add") ||
+                 (addEditMode && IsKeyPressed(KEY_ENTER))) && addInput[0]) {
+                addEditMode = false; reqAddId = addInput; reqAdd = true;
+            }
+            if (GuiButton((Rectangle){cx - pw * 0.5f + 16.0f, by + 46.0f, 110.0f, 26.0f}, "Browse..."))
+                openCatalog();
+            if ((GuiButton((Rectangle){cx + pw * 0.5f - 96.0f, by + 46.0f, 80.0f, 26.0f}, "Cancel") ||
+                 (IsKeyPressed(KEY_ESCAPE) && !showCatalog))) {
+                showAddOverlay = false; addEditMode = false;
+            }
+        }
+
+        // Browse-catalog modal (opened from the '+' overlay or the sidebar hint).
+        {
+            std::string pick = drawCatalogModal();
+            if (!pick.empty()) { reqAddId = pick; reqAdd = true; showAddOverlay = false; }
+        }
+
         rlPopMatrix();
         EndDrawing();
+
+        // ── Apply deferred tab-bar actions (after rendering, so the bound active-
+        //    tab references stayed valid for the whole frame) ────────────────────
+        if (reqActivate >= 0 && reqActivate < (int)tabs.size()) activeTab = reqActivate;
+        if (reqClose >= 0) closeTab(reqClose);
+        if (reqAdd) { addTab(reqAddId); addInput[0] = '\0'; showAddOverlay = false; }
     }
 
-    if (loadFuture.valid()) loadFuture.wait();   // don't tear down while a load is in flight
+    for (auto& t : tabs)                         // don't tear down while a load is in flight
+        if (t.loadFuture.valid()) t.loadFuture.wait();
     if (targetsReady) {
         UnloadRenderTexture(sceneTarget);
         UnloadRenderTexture(brightTarget);

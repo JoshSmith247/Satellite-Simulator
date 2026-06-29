@@ -19,6 +19,20 @@ namespace FetchTLE {
     // was taken. Returns empty only when both network and cache fail.
     std::string fetchTLECached(const std::string& noradID, bool* fromCache = nullptr);
 
+    // One entry in a browsable satellite catalog.
+    struct SatEntry {
+        std::string name;   // object name (TLE line 0)
+        std::string id;     // NORAD catalog number
+    };
+
+    // Fetch a whole CelesTrak group catalog (e.g. "active", "visual", "stations") as raw
+    // multi-TLE text, with the same on-disk cache/fallback behaviour as fetchTLECached.
+    // Cached under tle_cache/group_<group>.tle.
+    std::string fetchGroupCached(const std::string& group, bool* fromCache = nullptr);
+
+    // Parse raw multi-TLE catalog text into {name, NORAD id} entries (skips malformed records).
+    std::vector<SatEntry> parseCatalog(const std::string& raw);
+
     // Geodetic sub-satellite point {latitude_deg, longitude_deg, altitude_km} at `when`.
     // Longitude is geographic East-longitude (SGP4 ToGeodetic), ready for geoToWorld().
     std::array<float, 3> getSubPoint(const libsgp4::SGP4& sgp4, const libsgp4::DateTime& when);

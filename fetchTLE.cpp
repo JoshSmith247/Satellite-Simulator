@@ -7,6 +7,7 @@
 #include <fstream>
 #include <filesystem>
 #include <system_error>
+#include <cctype>
 #include <curl/curl.h>
 #include "Tle.h"
 #include "SGP4.h"
@@ -191,6 +192,103 @@ namespace FetchTLE {
             }
         }
         return std::string();
+    }
+
+    // Fetch a whole CelesTrak group catalog as raw multi-TLE text. Same curl setup as
+    // fetchTLE(), but with a longer timeout — the "active" catalog is a few MB.
+    static std::string fetchGroup(const std::string& group) {
+        CURL* curl;
+        std::string readBuffer;
+        std::string url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=" + group + "&FORMAT=tle";
+
+        curl = curl_easy_init();
+        if (curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "SatelliteSim/1.0");
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+            CURLcode res = curl_easy_perform(curl);
+            if (res != CURLE_OK) {
+                std::cerr << "CURL Error (group): " << curl_easy_strerror(res) << std::endl;
+                readBuffer.clear();
+            } else {
+                long httpCode = 0;
+                curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+                if (httpCode != 200) {
+                    std::cerr << "HTTP Error (group): " << httpCode << std::endl;
+                    readBuffer.clear();
+                }
+            }
+            curl_easy_cleanup(curl);
+        }
+        return readBuffer;
+    }
+
+    std::string fetchGroupCached(const std::string& group, bool* fromCache) {
+        if (fromCache) *fromCache = false;
+        std::string path = "tle_cache/group_" + group + ".tle";
+
+        std::string raw = fetchGroup(group);
+        if (validateTLE(raw)) {
+            std::error_code ec;
+            std::filesystem::create_directories("tle_cache", ec);
+            std::ofstream out(path, std::ios::binary | std::ios::trunc);
+            if (out) out << raw;
+            return raw;
+        }
+
+        // Network failed or returned junk — fall back to the cached catalog.
+        std::ifstream in(path, std::ios::binary);
+        if (in) {
+            std::stringstream ss;
+            ss << in.rdbuf();
+            std::string cached = ss.str();
+            if (validateTLE(cached)) {
+                std::cerr << "Using cached catalog for group " << group
+                          << " (network fetch failed)" << std::endl;
+                if (fromCache) *fromCache = true;
+                return cached;
+            }
+        }
+        return std::string();
+    }
+
+    std::vector<SatEntry> parseCatalog(const std::string& raw) {
+        // Collect non-empty, CR-stripped lines, then group into 3-line records.
+        std::vector<std::string> lines;
+        std::istringstream stream(raw);
+        std::string line;
+        while (std::getline(stream, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            if (!line.empty()) lines.push_back(line);
+        }
+
+        auto idFromLine1 = [](const std::string& l1) -> std::string {
+            size_t i = 1;
+            while (i < l1.size() && !std::isdigit((unsigned char)l1[i])) i++;
+            std::string id;
+            while (i < l1.size() && std::isdigit((unsigned char)l1[i])) id += l1[i++];
+            return id;
+        };
+        auto trim = [](const std::string& s) -> std::string {
+            size_t a = s.find_first_not_of(" \t");
+            size_t b = s.find_last_not_of(" \t");
+            return (a == std::string::npos) ? std::string() : s.substr(a, b - a + 1);
+        };
+
+        std::vector<SatEntry> entries;
+        for (size_t i = 0; i + 1 < lines.size(); i++) {
+            if (lines[i][0] == '1' && lines[i + 1][0] == '2' && i >= 1) {
+                std::string id = idFromLine1(lines[i]);
+                std::string name = trim(lines[i - 1]);
+                if (!id.empty() && !name.empty()) entries.push_back({ name, id });
+            }
+        }
+        return entries;
     }
 
 } // namespace FetchTLE
