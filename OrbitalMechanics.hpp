@@ -3,11 +3,8 @@
 
 #include <array>
 
-// Minimal two-body (Keplerian) orbital mechanics, independent of SGP4.
-// Seeded from an ECI state vector, it derives the classical orbital elements
-// and propagates analytically by solving Kepler's equation. Unlike SGP4 it
-// includes no perturbations (no J2, no drag), so its track drifts from SGP4
-// over time — which is the point of plotting the two side by side.
+// Minimal two-body Keplerian mechanics, independent of SGP4. No perturbations
+// (no J2, no drag), so its track intentionally drifts from SGP4 over time.
 namespace OrbitalMechanics {
 
     // Earth gravitational parameter (km^3 / s^2) and mean equatorial radius (km).

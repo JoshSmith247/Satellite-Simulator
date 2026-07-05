@@ -2,9 +2,8 @@
 #include <chrono>
 
 namespace {
-    // libsgp4::DateTime ticks are microseconds since 0001-01-01 (TimeSpan::TicksPerSecond
-    // == 1e6). 719162 days elapse from then to the Unix epoch (1970-01-01); this constant,
-    // verified against DateTime(1970,1,1).Ticks(), lets us build one from Unix seconds.
+    // libsgp4::DateTime ticks are microseconds since 0001-01-01; 719162 days
+    // elapse from then to the Unix epoch (1970-01-01).
     constexpr int64_t UNIX_EPOCH_TICKS = 719162LL * 86400LL * 1000000LL;
     constexpr double  TICKS_PER_SECOND = 1.0e6;
 

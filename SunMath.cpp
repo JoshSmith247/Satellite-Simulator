@@ -26,25 +26,20 @@ namespace SunSim {
         return (float)doy + (float)frac;
     }
 
-    // Calculates the Sun's position relative to Earth at the given Julian Date.
     SunState GetSunState(double jd, float distance) {
         double n = jd - 2451545.0;
 
-        // Mean longitude (L)
+        // Mean longitude, mean anomaly, then ecliptic longitude.
         double L = fmod(280.460 + 0.9856474 * n, 360.0);
-        // Mean anomaly (g)
         double g = fmod(357.528 + 0.9856003 * n, 360.0);
-
-        // Ecliptic longitude (lambda)
         double lambda = L + 1.915 * sin(g * DEG2RAD) + 0.020 * sin(2.0 * g * DEG2RAD);
         double lambdaRad = lambda * DEG2RAD;
 
         SunState state;
         state.dayOfYear = dayOfYearFromJD(jd);
 
-        // Ecliptic → ECI → canonical Raylib (X=-ECI_Y, Y=ECI_Z, Z=-ECI_X)
-        // → world space (+RotateZ 23.44°, same as satellites in main.cpp).
-        // The obliquity cancels: sun always lands at world Y=0 (ecliptic = world XZ plane).
+        // Ecliptic → ECI → Raylib world; the obliquity cancels, so the Sun always
+        // lands at world Y=0 (ecliptic = world XZ plane).
         state.position.x = -sinf(lambdaRad) * distance;
         state.position.y = 0.0f;
         state.position.z = -cosf(lambdaRad) * distance;
@@ -52,7 +47,6 @@ namespace SunSim {
         return state;
     }
 
-    // Calculates the Sun's position relative to Earth based on the current system date.
     SunState GetCurrentSunState(float distance) {
         return GetSunState(EarthSim::getJulianDate(), distance);
     }

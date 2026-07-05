@@ -12,8 +12,7 @@ namespace SunSim {
     // Sun state at the current wall-clock instant.
     SunState GetCurrentSunState(float distance);
 
-    // Sun state at an arbitrary instant given as a Julian Date, so the day/night
-    // terminator and day-of-year track the simulation clock.
+    // Sun state at a given Julian Date, so the terminator tracks the sim clock.
     SunState GetSunState(double julianDate, float distance);
 }
 

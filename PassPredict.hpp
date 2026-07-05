@@ -7,10 +7,7 @@
 #include "DateTime.h"
 #include "CoordGeodetic.h"
 
-// Observer-relative geometry and pass prediction for a tracked satellite.
-// Built on libsgp4's Observer/GetLookAngle, which yields azimuth, elevation,
-// slant range and range-rate — everything needed to point an antenna, schedule
-// a contact, and compute the Doppler shift on a radio link.
+// Observer-relative geometry and pass prediction, built on libsgp4's look angles.
 namespace PassPredict {
 
     // Instantaneous look angle from a ground station to the satellite.
@@ -47,8 +44,7 @@ namespace PassPredict {
                                     double horizonHours,
                                     double elevationMaskDeg = 5.0);
 
-    // Doppler-shifted observed frequency (Hz) for an emitted frequency, given the
-    // range-rate. f_obs = f_emit * (1 - rangeRate / c).
+    // Doppler-shifted observed frequency: f_obs = f_emit * (1 - rangeRate / c).
     double dopplerShiftedHz(double emittedHz, double rangeRateKmS);
 
     // Closest approach between two satellites over [start, start + hours].

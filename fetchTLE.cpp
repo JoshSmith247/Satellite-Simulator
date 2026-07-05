@@ -20,22 +20,14 @@ using namespace libsgp4;
 
 namespace FetchTLE {
 
-    /**
-     * @brief Callback function to handle data received from CelesTrak.
-     * libcurl calls this function as it receives chunks of data.
-     */
+    // libcurl write callback: appends response chunks to the buffer.
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
         size_t totalSize = size * nmemb;
         userp->append((char*)contents, totalSize);
         return totalSize;
     }
 
-    /**
-     * @brief Validates that a string contains a well-formed TLE (3-line format).
-     * Checks for a name line, a line starting with '1', and a line starting with '2'.
-     * @param tle The raw TLE string to validate.
-     * @return true if the TLE appears valid, false otherwise.
-     */
+    // A well-formed TLE needs a line starting with '1' and one starting with '2'.
     bool validateTLE(const std::string& tle) {
         if (tle.empty()) return false;
 
@@ -44,7 +36,6 @@ namespace FetchTLE {
         std::string line;
 
         while (std::getline(stream, line)) {
-            // Strip carriage returns in case of Windows-style line endings
             if (!line.empty() && line.back() == '\r')
                 line.pop_back();
 
@@ -55,46 +46,30 @@ namespace FetchTLE {
         return line1Found && line2Found;
     }
 
-    /**
-     * @brief Fetches TLE data for a given NORAD Catalog Number.
-     * @param noradID The catalog ID (e.g., 25544 for ISS)
-     * @return std::string The raw TLE text or an empty string on failure.
-     */
+    // Fetch TLE text for a NORAD ID from the CelesTrak GP API; empty on failure.
     std::string fetchTLE(const std::string& noradID) {
         CURL* curl;
         CURLcode res;
         std::string readBuffer;
-
-        // Construct the CelesTrak GP (General Perturbations) API URL
         std::string url = "https://celestrak.org/NORAD/elements/gp.php?CATNR=" + noradID + "&FORMAT=tle";
 
         curl = curl_easy_init();
         if (curl) {
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-            // CelesTrak requests require a User-Agent header to identify the client
+            // CelesTrak requires a User-Agent header identifying the client.
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "SatelliteSim/1.0");
-
-            // Follow redirects if the URL changes
             curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-            // Timeout settings to prevent hanging if CelesTrak is unreachable
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
             curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
-
-            // Set up the callback to capture the response
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-            // Perform the request
             res = curl_easy_perform(curl);
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
                 readBuffer.clear();
             } else {
-                // Check the HTTP response code — CelesTrak returns 200 even for bad IDs,
-                // but we still want to catch non-200 responses (rate limits, server errors, etc.)
                 long httpCode = 0;
                 curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
                 if (httpCode != 200) {
@@ -133,7 +108,7 @@ namespace FetchTLE {
                  (float)geo.altitude };
     }
 
-    // Geodetic sub-points sampled forward from `start` (for the ground-track prediction).
+    // Geodetic sub-points sampled forward from `start`.
     std::vector<std::array<float, 3>> getFutureSubPoints(const libsgp4::SGP4& sgp4,
                                                          int numPoints, double intervalMinutes,
                                                          const DateTime& start) {
@@ -160,7 +135,6 @@ namespace FetchTLE {
         return { p.x, p.y, p.z, v.x, v.y, v.z };
     }
 
-    // Filesystem-friendly cache path for a NORAD ID's last good TLE.
     static std::string cachePath(const std::string& noradID) {
         return "tle_cache/" + noradID + ".tle";
     }
@@ -170,7 +144,7 @@ namespace FetchTLE {
 
         std::string raw = fetchTLE(noradID);
         if (validateTLE(raw)) {
-            // Persist the fresh TLE for offline use next time.
+            // Persist the fresh TLE for offline use.
             std::error_code ec;
             std::filesystem::create_directories("tle_cache", ec);
             std::ofstream out(cachePath(noradID), std::ios::binary | std::ios::trunc);
@@ -194,8 +168,7 @@ namespace FetchTLE {
         return std::string();
     }
 
-    // Fetch a whole CelesTrak group catalog as raw multi-TLE text. Same curl setup as
-    // fetchTLE(), but with a longer timeout — the "active" catalog is a few MB.
+    // Same curl setup as fetchTLE() but a longer timeout — the "active" catalog is a few MB.
     static std::string fetchGroup(const std::string& group) {
         CURL* curl;
         std::string readBuffer;
@@ -241,7 +214,6 @@ namespace FetchTLE {
             return raw;
         }
 
-        // Network failed or returned junk — fall back to the cached catalog.
         std::ifstream in(path, std::ios::binary);
         if (in) {
             std::stringstream ss;

@@ -6,8 +6,8 @@ namespace EarthSim {
     // Earth Rotation Angle (degrees, IERS formula) at the current wall-clock instant.
     double getCurrentRotationAngle();
 
-    // Earth Rotation Angle (degrees) at an arbitrary instant given as a Julian Date.
-    // Used so the globe spins to match the simulation clock, not just "now".
+    // Earth Rotation Angle (degrees) at a given Julian Date, so the globe
+    // spins to match the simulation clock.
     double getRotationAngle(double julianDate);
 
     double getJulianDate();

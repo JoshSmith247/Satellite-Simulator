@@ -31,9 +31,7 @@
 #include <filesystem>
 #include <system_error>
 
-// ── Asynchronous satellite loading ────────────────────────────────────────────
 // Network fetch + TLE parse run on a worker thread so the window never freezes.
-// The result carries shared_ptrs that the main thread swaps in when ready.
 struct SatLoadResult {
     bool        ok        = false;
     bool        fromCache = false;
@@ -65,7 +63,6 @@ static SatLoadResult loadSatelliteData(std::string noradID) {
     return r;
 }
 
-// Result of an asynchronous browsable-catalog fetch (CelesTrak group).
 struct CatalogResult {
     bool        ok = false;
     std::string status;
@@ -87,8 +84,7 @@ static CatalogResult loadCatalogData(std::string group) {
     return r;
 }
 
-// One tracked satellite. Every open tab carries its own propagator + track
-// history so background tabs keep simulating while only the active one is drawn.
+// One tracked satellite; background tabs keep simulating while only the active one is drawn.
 struct SatTab {
     std::string id;
     std::shared_ptr<libsgp4::Tle>  tle;
@@ -108,7 +104,6 @@ struct SatTab {
     std::vector<PassPredict::Pass> passes;
     std::future<SatLoadResult>     loadFuture;        // in-flight network load (per tab)
 
-    // Per-tab view/planning state — what's open is remembered separately for each tab.
     bool   showMap      = false;
     bool   showHohmann  = false;
     double targetAltKm  = 1000.0;                     // Hohmann target circular-orbit altitude
@@ -126,7 +121,6 @@ static Color stationPalette(int i) {
 
 int main()
 {
-    // ── Ground stations (runtime-editable) ────────────────────────────────────
     struct GroundStation { std::string name; float lat, lon, altKm, maskDeg; Color color; };
     std::vector<GroundStation> stations = {
         { "WUSat", 38.627f, -90.199f, 0.142f, 5.0f, stationPalette(0) },
@@ -134,12 +128,8 @@ int main()
     };
     int selectedStation = 0;            // observer used for pass prediction / telemetry
 
-    // ── Radio link (for Doppler) ──────────────────────────────────────────────
     double downlinkHz = 145.800e6;      // ISS APRS/voice default; edit per CubeSat
 
-    // ── Satellite tabs ────────────────────────────────────────────────────────
-    // Each tab is one tracked satellite. Only the active tab is drawn, but every
-    // tab keeps simulating in the background so each keeps a continuous history.
     std::string exportStatus;
     const int   FUTURE_POINTS = 360;
     const float TAB_BAR_H     = 30.0f;
@@ -171,9 +161,8 @@ int main()
     auto markAllPassRecompute = [&]{ for (auto& t : tabs) t.forcePassRecompute = true; };
     auto markAllRecordBreak   = [&]{ for (auto& t : tabs) t.recordBreak        = true; };
 
-    addTab("25544");                     // ISS (Zarya) — default tab on startup
+    addTab("25544");                     // ISS — default tab on startup
 
-    // ── Simulation clock ──────────────────────────────────────────────────────
     SimClock clock;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
@@ -189,7 +178,6 @@ int main()
 
     SetTargetFPS(60);
 
-    // ── Earth ────────────────────────────────────────────────────────────────
     Image earthImage = LoadImage("earth_tx.jpg");
     if (earthImage.data == NULL)
         TraceLog(LOG_ERROR, "Failed to load earth_tx.jpg");
@@ -207,7 +195,6 @@ int main()
     const float SUN_VISUAL_DISTANCE = 2000.0f;
     const float SUN_RADIUS          = EARTH_RADIUS * 109.0f / 200.0f;
 
-    // ── Skybox ───────────────────────────────────────────────────────────────
     Texture2D skyTexture = LoadTexture("stars_tx.jpg");
     SetTextureFilter(skyTexture, TEXTURE_FILTER_BILINEAR);
 
@@ -218,7 +205,6 @@ int main()
     Shader skyShader = LoadShader("skybox.vs", "skybox.fs");
     skybox.materials[0].shader = skyShader;
 
-    // ── Lighting shader (Earth) ──────────────────────────────────────────────
     Shader shader       = LoadShader("lighting.vs", "lighting.fs");
     int lightPosLoc     = GetShaderLocation(shader, "lightPos");
     int ambientLoc      = GetShaderLocation(shader, "ambient");
@@ -229,14 +215,12 @@ int main()
     SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC3);
     earthModel.materials[0].shader = shader;
 
-    // ── Satellite shader ──────────────────────────────────────────────────────
     Shader satShader    = LoadShader("lighting.vs", "sat_lighting.fs");
     int satLightPosLoc  = GetShaderLocation(satShader, "lightPos");
     int satAmbientLoc   = GetShaderLocation(satShader, "ambient");
     int satViewPosLoc   = GetShaderLocation(satShader, "viewPos");
     SetShaderValue(satShader, satAmbientLoc, &ambient, SHADER_UNIFORM_VEC3);
 
-    // ── Bloom pipeline ────────────────────────────────────────────────────────
     Shader brightPassShader = LoadShader(0, "bloom_bright.fs");
     Shader blurShader       = LoadShader(0, "bloom_blur.fs");
     int bloomThresholdLoc   = GetShaderLocation(brightPassShader, "threshold");
@@ -245,8 +229,7 @@ int main()
     float bloomThreshold    = 0.72f;
     SetShaderValue(brightPassShader, bloomThresholdLoc, &bloomThreshold, SHADER_UNIFORM_FLOAT);
 
-    // Render targets sized to the framebuffer; rebuilt on window resize so the
-    // scene/bloom buffers always match the (possibly HiDPI) render resolution.
+    // Render targets match the (possibly HiDPI) framebuffer; rebuilt on window resize.
     RenderTexture2D sceneTarget = {0}, brightTarget = {0}, blurTargetA = {0}, blurTargetB = {0};
     int       bloomW = 0, bloomH = 0;
     Rectangle fullSrc{}, halfSrc{}, halfDst{};
@@ -274,14 +257,12 @@ int main()
     };
     rebuildTargets(GetRenderWidth(), GetRenderHeight());
 
-    // ── Orbit data ─────────────────────────────────────────────────────────────
     const float FUTURE_UPDATE_S = 5.0f;
 
     Model satModel = LoadModel("satellite.obj");
     satModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = GRAY;
     satModel.materials[0].shader = satShader;
 
-    // ── Fonts ────────────────────────────────────────────────────────────────
     Font font      = LoadFontEx("Roboto-Med.ttf",      96, 0, 0);
     Font font_bold = LoadFontEx("Montserrat-Bold.ttf", 96, 0, 0);
     if (font.texture.id == 0 || font_bold.texture.id == 0) {
@@ -295,12 +276,11 @@ int main()
         SetTextureFilter(font_bold.texture, TEXTURE_FILTER_TRILINEAR);
     }
 
-    // ── Add-satellite UI state ──────────────────────────────────────────────────
     char addInput[16]    = {0};
     bool addEditMode     = false;
     bool showAddOverlay  = false;        // '+' opens the search box over the scene
 
-    // Procedural satellite + question-mark icon for the add UI (no asset needed).
+    // Procedural satellite-with-question-mark icon (no asset needed).
     auto drawSatQuestionIcon = [&](float cx, float cy) {
         Color body = (Color){150,160,180,255}, panel = (Color){70,110,180,255};
         DrawRectangle((int)(cx-16),(int)(cy-12), 32, 24, body);
@@ -312,19 +292,18 @@ int main()
         DrawTextEx(font_bold, "?", {cx - q.x*0.5f, cy - q.y*0.5f - 1.0f}, 30, 1, RAYWHITE);
     };
 
-    // ── Browse-catalog UI state ─────────────────────────────────────────────────
     bool showCatalog    = false;
     char catFilter[32]  = {0};
     bool catFilterEdit  = false;
     int  catScroll = 0, catActive = -1;
     std::string catStatus = "Loading catalog...";
-    std::vector<FetchTLE::SatEntry> catalog;          // full fetched catalog
+    std::vector<FetchTLE::SatEntry> catalog;
     std::future<CatalogResult>      catFuture;
     // Filtered view rebuilt only when the filter text (or catalog) changes.
     std::string lastFilter = "\x01";                  // sentinel ⇒ forces first rebuild
-    std::vector<std::string> filterLabels;            // "<name>   <id>" backing strings
-    std::vector<std::string> filterIds;               // NORAD id parallel to filterLabels
-    std::vector<char*>       filterPtrs;              // pointers into filterLabels (for GuiListViewEx)
+    std::vector<std::string> filterLabels;
+    std::vector<std::string> filterIds;               // NORAD ids parallel to filterLabels
+    std::vector<char*>       filterPtrs;              // into filterLabels, for GuiListViewEx
 
     auto openCatalog = [&]() {
         showCatalog = true;
@@ -346,8 +325,7 @@ int main()
         catScroll = 0; catActive = -1;
         lastFilter = catFilter;
     };
-    // Quick-access categories: each just sets the filter over the loaded active catalog,
-    // so "Starlink" yields all currently-active Starlink satellites. Easy to extend.
+    // Quick-access categories: each just sets the filter over the active catalog.
     struct Category { const char* label; const char* filter; };
     static const Category CATEGORIES[] = {
         { "Starlink", "starlink" },
@@ -355,10 +333,9 @@ int main()
         { "Iridium",  "iridium"  },
         { "GPS",      "gps"      },
     };
-    const Color CHIP_BLUE = {140, 200, 255, 255};   // light blue for the category chips
+    const Color CHIP_BLUE = {140, 200, 255, 255};
 
-    // Draws the browse-catalog modal (must be called inside a drawing context). Returns the
-    // chosen NORAD id when the user picks a row, otherwise an empty string.
+    // Browse-catalog modal; returns the chosen NORAD id, or empty if none picked.
     auto drawCatalogModal = [&]() -> std::string {
         if (!showCatalog) return std::string();
         float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
@@ -376,7 +353,6 @@ int main()
         if (GuiTextBox((Rectangle){fx + 56, fy, fw - 56, 26}, catFilter, sizeof(catFilter), catFilterEdit))
             catFilterEdit = !catFilterEdit;
 
-        // Quick-access category chips (light blue) — click to set the filter.
         Vector2 mp = GetMousePosition();
         float chipX = fx, chipY = py + 90;
         DrawTextEx(font, "Quick:", {chipX, chipY + 3.0f}, 13, 1, GRAY);
@@ -413,22 +389,20 @@ int main()
         return picked;
     };
 
-    bool showEditor = false;                // station editor is a global resource (stays app-level)
+    bool showEditor = false;
 
-    // ── Conjunction screening (closest approach between open tabs; app-level) ───
+    // Conjunction screening: closest approach between open tabs.
     bool  showConj   = false;
     float conjTimer  = 0.0f;
     struct ConjPair { int i, j; double rangeKm; double tcaUnix; };
     std::vector<ConjPair> conjPairs;
 
-    // ── Hohmann transfer results (recomputed each frame for the active tab) ─────
-    // The toggle + target altitude live per-tab on SatTab; these are just scratch.
-    OrbitalMechanics::Hohmann hoh;          // last computed transfer
+    // Hohmann scratch, recomputed each frame; the toggle + target altitude live per-tab.
+    OrbitalMechanics::Hohmann hoh;
     bool    hohValid = false;
     Vector3 hohBurn1W{}, hohBurn2W{};       // burn-point world positions (for 2D labels)
 
-
-    // Station/link editor field buffers + which one is being edited.
+    // Station/link editor field buffers.
     char nameBuf[32] = {0}, latBuf[16] = {0}, lonBuf[16] = {0},
          altBuf[16] = {0}, maskBuf[16] = {0}, freqBuf[16] = {0};
     int  activeEditField = -1;          // -1 none; 0..5 = name/lat/lon/alt/mask/freq
@@ -461,8 +435,7 @@ int main()
         if (passes.empty()) { exportStatus = "No passes to export"; return; }
         std::error_code ec;
         std::filesystem::create_directories("exports", ec);
-        // Sanitize path components — station names like "0N/0E" contain characters
-        // (e.g. '/') that would otherwise be read as directory separators.
+        // Station names like "0N/0E" would otherwise inject path separators.
         auto safe = [](std::string s) {
             for (char& c : s)
                 if (!std::isalnum((unsigned char)c) && c != '-' && c != '.') c = '_';
@@ -485,20 +458,17 @@ int main()
         exportStatus = "Exported " + std::to_string(passes.size()) + " passes -> " + fn;
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
     while (!WindowShouldClose())
     {
         if (IsWindowResized())
             rebuildTargets(GetRenderWidth(), GetRenderHeight());
 
-        // The 2D UI is authored in logical-screen coords and drawn scaled up to the
-        // (HiDPI) framebuffer, but GetMousePosition() reports framebuffer-space pixels.
-        // Scale the mouse back into logical space so raygui hit-tests line up with the
-        // controls the user actually sees (otherwise clicks miss every button).
+        // UI is authored in logical coords but GetMousePosition() reports framebuffer
+        // pixels; scale the mouse back so raygui hit-tests line up on HiDPI displays.
         SetMouseScale((float)GetScreenWidth() / GetRenderWidth(),
                       (float)GetScreenHeight() / GetRenderHeight());
 
-        // ── Async load: swap each satellite in once its worker thread finishes ──
+        // Swap each satellite in once its async load finishes.
         for (auto& t : tabs) {
             if (t.loadFuture.valid() &&
                 t.loadFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -515,7 +485,6 @@ int main()
             }
         }
 
-        // Catalog fetch: swap in entries once the worker finishes, then rebuild filter.
         if (catFuture.valid() &&
             catFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             CatalogResult cr = catFuture.get();
@@ -528,13 +497,12 @@ int main()
         // Deferred tab-bar actions (applied after rendering so refs stay valid).
         int  reqActivate = -1, reqClose = -1;
         bool reqAdd = false;
-        std::string reqAddId;            // NORAD id to open as a new tab
+        std::string reqAddId;
 
         bool textActive   = addEditMode || activeEditField != -1 || catFilterEdit ||
                             (activeTab >= 0 && tabs[activeTab].targetAltEdit);
         bool blockCamera  = textActive || showEditor || showAddOverlay || activeTab < 0;
 
-        // ── Input: camera ──────────────────────────────────────────────────────
         Vector2 mouseDelta = GetMouseDelta();
         float   moveSpeed  = 0.15f;
         Vector3 movement   = {0.0f, 0.0f, 0.0f};
@@ -554,7 +522,7 @@ int main()
                 UpdateCameraPro(&camera, movement, (Vector3){0,0,0}, GetMouseWheelMove() * 2.0f);
         }
 
-        // ── Input: hotkeys (suppressed while typing in a text field) ────────────
+        // Hotkeys, suppressed while typing in a text field.
         if (!textActive) {
             if (IsKeyPressed(KEY_F)) ToggleFullscreen();
             if (IsKeyPressed(KEY_M) && activeTab >= 0) tabs[activeTab].showMap     = !tabs[activeTab].showMap;
@@ -589,7 +557,6 @@ int main()
         libsgp4::DateTime simDt = clock.dateTime();
         double            jd    = clock.julianDate();
 
-        // ── Simulation update ───────────────────────────────────────────────────
         SunSim::SunState sun = SunSim::GetSunState(jd, SUN_VISUAL_DISTANCE);
         Vector3 sunPos       = sun.position;
 
@@ -612,9 +579,8 @@ int main()
         };
         const float KM_TO_SCENE = EARTH_RADIUS / 6371.0f;
 
-        // Inertial ECI (km) -> scene. Canonical mapping (X=-ECI_Y, Y=ECI_Z, Z=-ECI_X)
-        // with Earth's axial tilt applied, but NOT the daily spin — orbits are inertial,
-        // so they stay fixed while the textured Earth rotates beneath them.
+        // Inertial ECI (km) -> scene: X=-ECI_Y, Y=ECI_Z, Z=-ECI_X, plus axial tilt but
+        // NOT the daily spin — orbits stay fixed while the textured Earth rotates beneath.
         auto sceneFromEci = [&](const std::array<double, 3>& p) -> Vector3 {
             Vector3 v = { -(float)p[1] * KM_TO_SCENE,
                            (float)p[2] * KM_TO_SCENE,
@@ -626,7 +592,7 @@ int main()
         for (size_t i = 0; i < stations.size(); i++)
             stationPositions[i] = geoToWorld(stations[i].lat, stations[i].lon, 0.0f);
 
-        // ── Simulate every tab (background sim keeps each history continuous) ──
+        // Simulate every tab so background histories stay continuous.
         const GroundStation&   obs = stations[selectedStation];
         libsgp4::CoordGeodetic obsGeo(obs.lat, obs.lon, obs.altKm);
         const double RECORD_INTERVAL = 3.0;   // sim seconds between observed-track samples
@@ -640,9 +606,8 @@ int main()
                 TraceLog(LOG_WARNING, "SGP4 propagation error: %s", e.what());
             }
 
-            // Record where the satellite has ACTUALLY been this session (a real trace
-            // at whatever time speed, not a backward extrapolation). A jump (R/N) breaks
-            // the segment so the line isn't connected across the gap.
+            // Record where the satellite has actually been this session; a time jump
+            // (R/N) breaks the segment so the line isn't drawn across the gap.
             if (t.lastRecordSim <= -1e17 || std::fabs(simU - t.lastRecordSim) >= RECORD_INTERVAL) {
                 if (t.recordBreak && !t.observedPath.empty())
                     t.observedPath.push_back({NAN, NAN, NAN});
@@ -687,7 +652,7 @@ int main()
             }
         }
 
-        // ── Active-tab geometry (observer-relative; drives the globe + sidebar) ──
+        // Observer-relative geometry for the active tab.
         Vector3 satPos = Vector3Zero();
         PassPredict::LookAngle look;
         double dopplerHz = 0.0;
@@ -698,7 +663,6 @@ int main()
             dopplerHz = PassPredict::dopplerShiftedHz(downlinkHz, look.rangeRateKmS) - downlinkHz;
         }
 
-        // ── Conjunction screening: closest approach between every pair of loaded tabs ──
         conjTimer += GetFrameTime();
         if (showConj && (conjDirty || conjTimer >= 3.0f)) {
             conjDirty = false; conjTimer = 0.0f;
@@ -716,12 +680,10 @@ int main()
                       [](const ConjPair& a, const ConjPair& b) { return a.rangeKm < b.rangeKm; });
         }
 
-        // ── Empty state: no tabs ⇒ gray screen with icon + NORAD search ─────────
+        // Empty state: no tabs open.
         if (activeTab < 0) {
             BeginDrawing();
             ClearBackground((Color){26, 28, 34, 255});
-            // Author the UI in logical coords and scale up to the (HiDPI) framebuffer,
-            // matching the main path so raygui hit-tests line up with the scaled mouse.
             rlPushMatrix();
             rlScalef((float)GetRenderWidth() / GetScreenWidth(),
                      (float)GetRenderHeight() / GetScreenHeight(), 1.0f);
@@ -757,7 +719,6 @@ int main()
         float  subLat = A.subLat, subLon = A.subLon;
         bool   tleFromCache = A.tleFromCache;
         bool   loading = A.loadFuture.valid();
-        // Per-tab view/planning state (so "what's open" is remembered per tab).
         auto&  showMap = A.showMap; auto& showHohmann = A.showHohmann;
         auto&  targetAltKm = A.targetAltKm; auto& targetAltBuf = A.targetAltBuf;
         auto&  targetAltEdit = A.targetAltEdit;
@@ -767,7 +728,7 @@ int main()
         SetShaderValue(satShader, satLightPosLoc, &sunPos,           SHADER_UNIFORM_VEC3);
         SetShaderValue(satShader, satViewPosLoc,  &camera.position,  SHADER_UNIFORM_VEC3);
 
-        // ── Phase 1: Render 3D scene to texture ───────────────────────────────
+        // Render the 3D scene to texture for the bloom pipeline.
         BeginTextureMode(sceneTarget);
         ClearBackground((Color){2, 2, 15, 255});
         BeginMode3D(camera);
@@ -779,9 +740,8 @@ int main()
 
         DrawModel(earthModel, Vector3Zero(), EARTH_RADIUS, WHITE);
 
-        // Observed path — the actual session record of where the satellite has been,
-        // billboard quads, brightest near the satellite and fading into the past.
-        // Co-rotates with the globe (model space); NaN entries break the line at jumps.
+        // Observed path: fading billboard quads that co-rotate with the globe;
+        // NaN entries break the line at time jumps.
         int pastCount = showHohmann ? 0 : (int)observedPath.size();
         rlDisableBackfaceCulling();
         BeginBlendMode(BLEND_ADDITIVE);
@@ -808,7 +768,7 @@ int main()
         EndBlendMode();
         rlEnableBackfaceCulling();
 
-        // Future ground track — billboard quads, orange, fading
+        // Future ground track (orange, fading).
         int futureCount = showHohmann ? 0 : (int)futurePath.size();
         if (futureCount > 0) {
             Vector3 futureOrigin = Vector3Transform(futurePath[0], earthModel.transform);
@@ -840,7 +800,7 @@ int main()
         EndBlendMode();
         rlEnableBackfaceCulling();
 
-        // Two-body Kepler prediction — thin cyan line
+        // Two-body Kepler prediction (thin cyan line).
         int keplerCount = showHohmann ? 0 : (int)keplerPath.size();
         BeginBlendMode(BLEND_ALPHA);
         for (int i = 1; i < keplerCount; i++) {
@@ -851,8 +811,7 @@ int main()
         }
         EndBlendMode();
 
-        // Satellite model + bright beacon (hidden in Hohmann mode, which uses its own
-        // inertial orbit diagram + transfer-spacecraft marker instead).
+        // Satellite model + beacon (hidden in Hohmann mode, which draws its own marker).
         if (sgp4 && !showHohmann) {
             float satScale = 0.01f;
             DrawModelEx(satModel, satPos, (Vector3){0, 1, 0}, 0.0f,
@@ -860,7 +819,7 @@ int main()
             DrawSphere(satPos, 0.07f, {255, 235, 160, 255});
         }
 
-        // ── Hohmann transfer visualization (inertial orbits) ──────────────────
+        // Hohmann transfer visualization (inertial orbits).
         hohValid = false;
         if (showHohmann && kepEl.valid) {
             const double PI_D = 3.14159265358979323846, TWO_PI_D = 2.0 * PI_D;
@@ -872,9 +831,8 @@ int main()
             double inc = kepEl.i, raan = kepEl.raan;
             bool   raising = hoh.raising;
 
-            // Burn 1 is at the current orbit radius r1 — the transfer's PERIapsis when
-            // raising, but its APOapsis when lowering. Orient the ellipse so that apsis
-            // lands at the satellite's current in-plane angle (argp + true anomaly).
+            // Burn 1 sits at r1 — the transfer's periapsis when raising, apoapsis when
+            // lowering; orient the ellipse so that apsis lands at the satellite's angle.
             double nuBurn1 = raising ? 0.0 : PI_D;
             double nuBurn2 = raising ? PI_D : 0.0;
             double argpT   = kepEl.argp + kepEl.nu0 - nuBurn1;
@@ -898,20 +856,18 @@ int main()
             drawArc(r2, 0.0, argpT, 0.0, TWO_PI_D, 160, (Color){ 80, 235, 140, 170});
             drawArc(hoh.aTransfer, hoh.eTransfer, argpT, pathN0, pathN1, 128, (Color){255, 150, 40, 255});
 
-            // Burn points (also the transfer's apsides): burn 1 at r1, burn 2 at r2.
             hohBurn1W = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nuBurn1);
             hohBurn2W = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nuBurn2);
             DrawSphere(hohBurn1W, 0.13f, (Color){255, 180, 60, 255});
             DrawSphere(hohBurn2W, 0.13f, (Color){120, 255, 160, 255});
 
-            // Thruster icons: an exhaust cone at each burn, pointing opposite the thrust
-            // (thrust is prograde when raising, retrograde when lowering — same at both burns).
+            // Exhaust cones point opposite the thrust: prograde raising, retrograde lowering.
             auto thruster = [&](Vector3 at, double nu) {
                 Vector3 ahead  = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nu + 0.04);
                 Vector3 behind = orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, nu - 0.04);
                 Vector3 prog   = Vector3Normalize(Vector3Subtract(ahead, behind));
                 Vector3 thrust = raising ? prog : Vector3Negate(prog);
-                Vector3 exhaust = Vector3Negate(thrust);     // plume opposite thrust
+                Vector3 exhaust = Vector3Negate(thrust);
                 rlDisableBackfaceCulling();
                 DrawCylinderEx(at, Vector3Add(at, Vector3Scale(exhaust, 0.55f)), 0.10f, 0.0f, 10,
                                (Color){255, 150, 40, 255});
@@ -924,7 +880,7 @@ int main()
             thruster(hohBurn1W, nuBurn1);
             thruster(hohBurn2W, nuBurn2);
 
-            // Spacecraft coasting along the transfer (visual animation, loops burn1 -> burn2).
+            // Spacecraft animation coasting burn 1 -> burn 2.
             double ph = fmod(GetTime() * 0.12, 1.0);
             DrawSphere(orbitPt(hoh.aTransfer, hoh.eTransfer, argpT, pathN0 + (pathN1 - pathN0) * ph),
                        0.10f, WHITE);
@@ -949,7 +905,7 @@ int main()
         EndMode3D();
         EndTextureMode();
 
-        // ── Phase 2: bright pass ──────────────────────────────────────────────
+        // Bloom: bright pass.
         BeginTextureMode(brightTarget);
         ClearBackground(BLACK);
         BeginShaderMode(brightPassShader);
@@ -957,7 +913,7 @@ int main()
         EndShaderMode();
         EndTextureMode();
 
-        // ── Phase 3: Gaussian blur ping-pong ──────────────────────────────────
+        // Bloom: Gaussian blur ping-pong.
         int one = 1, zero = 0;
         for (int pass = 0; pass < 3; pass++) {
             Texture2D blurInput = (pass == 0) ? brightTarget.texture : blurTargetB.texture;
@@ -978,7 +934,7 @@ int main()
             EndTextureMode();
         }
 
-        // ── Phase 4: composite + 2D UI ────────────────────────────────────────
+        // Composite scene + bloom, then draw the 2D UI in logical coords.
         BeginDrawing();
         Rectangle fullDst = {0, 0, (float)GetRenderWidth(), (float)GetRenderHeight()};
         DrawTexturePro(sceneTarget.texture, fullSrc, fullDst, {0, 0}, 0.0f, WHITE);
@@ -1048,7 +1004,7 @@ int main()
             }
         }
 
-        // ── Conjunction panel (toggle X) — closest approach between open tabs ────
+        // Conjunction panel (toggle X).
         if (showConj) {
             const float pw = 330.0f, px = screenW - sidebarWidth - pw - 10.0f, py = 80.0f + TAB_BAR_H;
             int rows = (int)conjPairs.size(); if (rows > 8) rows = 8;
@@ -1077,7 +1033,7 @@ int main()
             }
         }
 
-        // Clock readout (shifted below the tab bar)
+        // Clock readout
         float clkY = TAB_BAR_H + 10.0f;
         DrawTextEx(font, simDt.ToString().substr(0, 19).c_str(), {10, clkY}, 20, 2, YELLOW);
         DrawTextEx(font, TextFormat("%s   x%g   Day %.2f",
@@ -1088,7 +1044,7 @@ int main()
         if (!exportStatus.empty())
             DrawTextEx(font, exportStatus.c_str(), {10, screenH - 18.0f}, 13, 1, (Color){120,255,140,255});
 
-        // ── Hohmann transfer panel + burn labels (toggle H) ─────────────────────
+        // Hohmann panel + burn labels (toggle H).
         if (showHohmann) {
             const float px = 360.0f, py = 80.0f + TAB_BAR_H, pw = 300.0f, ph = 212.0f;
             DrawRectangleRec((Rectangle){px, py, pw, ph}, ColorAlpha(BLACK, 0.6f));
@@ -1117,7 +1073,6 @@ int main()
                 double v = atof(targetAltBuf);
                 if (v > 50.0) targetAltKm = v;
             }
-            // 3D burn-point labels
             if (hohValid) {
                 Vector2 sp1 = GetWorldToScreen(hohBurn1W, camera);
                 Vector2 sp2 = GetWorldToScreen(hohBurn2W, camera);
@@ -1130,7 +1085,7 @@ int main()
             }
         }
 
-        // ── 2D map (toggle M) ──────────────────────────────────────────────────
+        // 2D map (toggle M).
         if (showMap) {
             float mw = screenW - sidebarWidth - 40.0f;
             float mh = mw * 0.5f;
@@ -1162,7 +1117,7 @@ int main()
             DrawTextEx(font_bold, "GROUND TRACK (2D)  [M] close", {mx + 6, my + 4}, 14, 1, RAYWHITE);
         }
 
-        // ── Right sidebar ───────────────────────────────────────────────────────
+        // Right sidebar
         Rectangle sidebarRect = {screenW - sidebarWidth, 0, sidebarWidth, screenH};
         DrawRectangleRec(sidebarRect, ColorAlpha(DARKGRAY, 0.7f));
         DrawLineEx({screenW - sidebarWidth, 0}, {screenW - sidebarWidth, screenH}, 2, GRAY);
@@ -1234,7 +1189,7 @@ int main()
             }
         }
 
-        // ── Station / link editor (toggle E) ───────────────────────────────────
+        // Station / link editor (toggle E).
         if (showEditor) {
             if (editorSynced != selectedStation) syncEditorBuffers();
             float ew = 320.0f, eh = 360.0f;
@@ -1289,7 +1244,7 @@ int main()
                        {ex + 16, byrow + 70.0f}, 12, 1, GRAY);
         }
 
-        // ── Tab bar (top strip, up to the sidebar) ──────────────────────────────
+        // Tab bar
         {
             float barW = screenW - sidebarWidth;
             DrawRectangleRec((Rectangle){0, 0, barW, TAB_BAR_H}, (Color){18, 20, 26, 235});
@@ -1315,7 +1270,7 @@ int main()
                 }
                 tx += TW + 4.0f;
             }
-            if ((int)tabs.size() < MAX_TABS) {       // hide '+' once the 7-tab cap is reached
+            if ((int)tabs.size() < MAX_TABS) {       // hide '+' at the tab cap
                 Rectangle pr = {tx, 3.0f, TH, TH};
                 bool phover = CheckCollisionPointRec(mp, pr);
                 DrawRectangleRec(pr, phover ? (Color){44, 70, 110, 255} : (Color){32, 34, 42, 255});
@@ -1325,7 +1280,7 @@ int main()
             }
         }
 
-        // ── Add-satellite overlay (opened by '+') ───────────────────────────────
+        // Add-satellite overlay (opened by '+').
         if (showAddOverlay) {
             DrawRectangleRec((Rectangle){0, 0, screenW, screenH}, ColorAlpha(BLACK, 0.55f));
             float cx = screenW * 0.5f, cy = screenH * 0.5f, pw = 360.0f, ph = 210.0f;
@@ -1348,7 +1303,6 @@ int main()
             }
         }
 
-        // Browse-catalog modal (opened from the '+' overlay or the sidebar hint).
         {
             std::string pick = drawCatalogModal();
             if (!pick.empty()) { reqAddId = pick; reqAdd = true; showAddOverlay = false; }
@@ -1357,14 +1311,13 @@ int main()
         rlPopMatrix();
         EndDrawing();
 
-        // ── Apply deferred tab-bar actions (after rendering, so the bound active-
-        //    tab references stayed valid for the whole frame) ────────────────────
+        // Apply deferred tab-bar actions now that the active-tab references are done.
         if (reqActivate >= 0 && reqActivate < (int)tabs.size()) activeTab = reqActivate;
         if (reqClose >= 0) closeTab(reqClose);
         if (reqAdd) { addTab(reqAddId); addInput[0] = '\0'; showAddOverlay = false; }
     }
 
-    for (auto& t : tabs)                         // don't tear down while a load is in flight
+    for (auto& t : tabs)                       // don't tear down while a load is in flight
         if (t.loadFuture.valid()) t.loadFuture.wait();
     if (targetsReady) {
         UnloadRenderTexture(sceneTarget);
